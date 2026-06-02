@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mini Balatro — Shop Screen · Design Pack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Monoton&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@600;700;800;900&family=Chakra+Petch:wght@500;600;700&family=Rubik+Mono+One&family=Zen+Dots&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *{ box-sizing:border-box; margin:0; padding:0; }
+      :root{
+        --violet:#b026ff; --cyan:#00e5ff; --pink:#ff2e97;
+        --gold:#ffc53d;  /* NEW — money / cost / reward / legendary */
+        --lime:#8cff5b;  /* NEW — go / gains / affordable / uncommon */
+      }
+      body{ background:radial-gradient(circle at 50% -10%, #1a0723 0%, #0a0612 55%, #050208 100%); background-attachment:fixed;
+        color:#fff; font-family:'Rajdhani', system-ui, sans-serif; min-height:100vh; padding-bottom:40px; }
+      .head{ text-align:center; padding:30px 16px 6px; }
+      .head h2{ font-size:22px; font-weight:700; letter-spacing:.04em; color:#e9dcff; }
+      .head p{ opacity:.6; font-size:13px; margin-top:6px; }
+      .legend{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:14px auto 4px; max-width:820px; }
+      .role{ display:flex; align-items:center; gap:7px; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+        color:#ffffffb0; border:1px solid #ffffff18; border-radius:999px; padding:5px 11px; background:#ffffff06; }
+      .role i{ font-style:normal; opacity:.7; } .role b{ color:#fff; }
+      .dot{ width:12px; height:12px; border-radius:3px; box-shadow:0 0 8px currentColor; }
+
+      .band{ padding:34px 16px 6px; border-top:1px solid #ffffff10; margin-top:26px; }
+      .stage{ width:100%; max-width:1000px; margin:0 auto; border-radius:22px; overflow:hidden; position:relative;
+        aspect-ratio:16/10; min-height:560px; display:flex; flex-direction:column; }
+      .caption{ font-family:ui-monospace, monospace; font-size:12px; color:#ffffffb0; text-align:center; max-width:1000px;
+        margin:14px auto 0; padding:10px 14px; border:1px dashed var(--violet); border-radius:10px; }
+      .caption b{ color:#fff; } .caption .sw{ display:inline-block; width:13px; height:13px; border-radius:3px; vertical-align:middle; margin:0 1px; }
+
+      /* shared owned-joker tray glyph + shop grid skeleton (positioning only) */
+      .tray{ display:flex; gap:9px; justify-content:center; }
+      .grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; width:100%; max-width:680px; margin:0 auto; }
+
+      /* =================================================================== */
+      /* DIRECTION 1 — NEON FELT ARCADE                                       */
+      /* =================================================================== */
+      .dir1{ background:radial-gradient(ellipse 120% 80% at 50% 22%, #34114e 0%, #1d0830 55%, #0c0418 100%);
+        box-shadow:inset 0 0 120px rgba(0,0,0,.7), inset 0 2px 0 rgba(255,255,255,.06), 0 0 40px rgba(176,38,255,.18); }
+      .dir1::before{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.5;
+        background:repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0 2px, transparent 2px 7px),
+          repeating-linear-gradient(-45deg, rgba(0,0,0,.05) 0 2px, transparent 2px 7px); }
+      .dir1 .top{ display:flex; align-items:center; gap:14px; padding:16px 18px 8px; }
+      .dir1 .cleared{ font-family:'Monoton'; font-size:22px; color:var(--lime); text-shadow:0 0 14px rgba(140,255,91,.7); }
+      .dir1 .cash{ display:flex; flex-direction:column; padding:7px 16px; border-radius:12px; background:rgba(140,255,91,.1); border:1px solid var(--lime); }
+      .dir1 .cash .k{ font-size:9px; letter-spacing:.2em; color:#bfffb0; text-transform:uppercase; } .dir1 .cash .v{ font-family:'Rubik Mono One'; font-size:18px; color:var(--lime); }
+      .dir1 .purse{ margin-left:auto; display:flex; flex-direction:column; align-items:center; padding:7px 18px; border-radius:12px; background:rgba(255,197,61,.1); border:1px solid var(--gold); box-shadow:0 0 16px rgba(255,197,61,.3); }
+      .dir1 .purse .k{ font-size:9px; letter-spacing:.2em; color:#ffe39a; text-transform:uppercase; } .dir1 .purse .v{ font-family:'Rubik Mono One'; font-size:22px; color:var(--gold); text-shadow:0 0 12px rgba(255,197,61,.6); }
+      .dir1 .trayrow{ padding:2px 18px 10px; display:flex; align-items:center; gap:10px; justify-content:center; }
+      .dir1 .traylbl{ font-size:10px; letter-spacing:.2em; color:#ffffff80; text-transform:uppercase; }
+      .dir1 .jk{ width:92px; height:50px; border-radius:9px; padding:6px 8px; background:linear-gradient(160deg,#ffffff12,#ffffff04); border:1px solid var(--violet); box-shadow:0 0 12px rgba(176,38,255,.3); position:relative; }
+      .dir1 .jk .nm{ font-size:11px; font-weight:700; } .dir1 .jk .ef{ font-size:9px; color:var(--cyan); margin-top:1px; }
+      .dir1 .jk .sell{ position:absolute; top:4px; right:6px; font-size:9px; color:var(--gold); }
+      .dir1 .jk.empty{ border-style:dashed; border-color:#ffffff2e; background:transparent; box-shadow:none; display:flex; align-items:center; justify-content:center; color:#ffffff45; font-size:9px; letter-spacing:.18em; }
+      .dir1 .shoptitle{ text-align:center; font-size:11px; letter-spacing:.3em; color:#ffffff80; text-transform:uppercase; padding:4px 0; }
+      .dir1 .shopwrap{ flex:1; display:flex; flex-direction:column; justify-content:center; gap:12px; padding:0 18px; }
+      .dir1 .item{ border-radius:14px; padding:13px 13px 12px; background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+        display:flex; flex-direction:column; gap:5px; position:relative; min-height:150px; box-shadow:inset 0 0 22px rgba(0,0,0,.45); }
+      .dir1 .item.common{ border:1.5px solid var(--cyan); box-shadow:0 0 16px rgba(0,229,255,.28), inset 0 0 22px rgba(0,0,0,.45); }
+      .dir1 .item.rare{ border:1.5px solid var(--pink); box-shadow:0 0 18px rgba(255,46,151,.35), inset 0 0 22px rgba(0,0,0,.45); }
+      .dir1 .item.planet{ border:1.5px solid var(--gold); box-shadow:0 0 16px rgba(255,197,61,.28), inset 0 0 22px rgba(0,0,0,.45); }
+      .dir1 .rtag{ align-self:flex-start; font-size:9px; letter-spacing:.18em; font-weight:700; text-transform:uppercase; padding:3px 9px; border-radius:999px; }
+      .dir1 .common .rtag{ background:var(--cyan); color:#04222a; } .dir1 .rare .rtag{ background:var(--pink); color:#2a0014; } .dir1 .planet .rtag{ background:var(--gold); color:#241800; }
+      .dir1 .iname{ font-family:'Monoton'; font-size:17px; color:#fff; text-shadow:0 0 10px var(--violet); }
+      .dir1 .ieff{ font-size:12px; color:#dfe9ff; line-height:1.15; flex:1; } .dir1 .ilvl{ font-size:10px; color:#ffffff90; }
+      .dir1 .ibuy{ display:flex; align-items:center; justify-content:space-between; margin-top:2px; }
+      .dir1 .cost{ font-family:'Rubik Mono One'; font-size:18px; color:var(--gold); text-shadow:0 0 10px rgba(255,197,61,.5); }
+      .dir1 .footer{ display:flex; align-items:center; gap:12px; justify-content:center; padding:14px 0 16px; }
+      .dir1 .nextchip{ font-size:11px; color:#ffffff90; padding:6px 12px; border:1px solid #ffffff22; border-radius:999px; }
+      .dir1 .nextchip b{ color:var(--gold); }
+      .dir1 .btn{ font-family:'Rajdhani'; font-weight:700; letter-spacing:.06em; text-transform:uppercase; font-size:13px; border-radius:10px; padding:9px 18px; border:none; cursor:pointer; }
+      .dir1 .btn.buy{ background:linear-gradient(180deg,#a8ff7a,#5bd83a); color:#06210a; box-shadow:0 0 12px rgba(140,255,91,.5); padding:8px 18px; }
+      .dir1 .btn.reroll{ background:transparent; color:var(--gold); border:1px solid var(--gold); }
+      .dir1 .btn.cont{ background:linear-gradient(180deg,#ff5bb0,#d61f86); color:#fff; box-shadow:0 0 14px rgba(255,46,151,.5); padding:11px 28px; font-size:14px; }
+
+      /* =================================================================== */
+      /* DIRECTION 2 — CYBER HUD                                              */
+      /* =================================================================== */
+      .dir2{ background:#080611; box-shadow:inset 0 0 0 1px #00e5ff22, 0 0 40px rgba(0,229,255,.12); font-family:'Chakra Petch'; }
+      .dir2::before{ content:""; position:absolute; inset:0; pointer-events:none;
+        background:linear-gradient(rgba(0,229,255,.045) 1px, transparent 1px) 0 0/100% 34px,
+          linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px) 0 0/34px 100%,
+          repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 3px); }
+      .dir2 .corner{ position:absolute; width:20px; height:20px; border:2px solid var(--cyan); opacity:.7; pointer-events:none; }
+      .dir2 .corner.tl{ top:10px; left:10px; border-right:0; border-bottom:0; } .dir2 .corner.tr{ top:10px; right:10px; border-left:0; border-bottom:0; }
+      .dir2 .corner.bl{ bottom:10px; left:10px; border-right:0; border-top:0; } .dir2 .corner.br{ bottom:10px; right:10px; border-left:0; border-top:0; }
+      .dir2 .top{ display:flex; align-items:center; gap:12px; padding:18px 20px 8px; }
+      .dir2 .cleared{ font-family:'Orbitron'; font-weight:900; font-size:18px; letter-spacing:.06em; color:var(--lime); text-shadow:0 0 12px rgba(140,255,91,.6); }
+      .dir2 .cash{ padding:6px 14px; background:#8cff5b16; border:1px solid var(--lime); display:flex; flex-direction:column; clip-path:polygon(8px 0,100% 0,100% 100%,0 100%,0 8px); }
+      .dir2 .cash .k{ font-size:8px; letter-spacing:.2em; color:#bfffb0; } .dir2 .cash .v{ font-family:'Orbitron'; font-weight:800; font-size:15px; color:var(--lime); }
+      .dir2 .purse{ margin-left:auto; padding:6px 16px; background:#ffc53d16; border:1px solid var(--gold); display:flex; flex-direction:column; align-items:center; clip-path:polygon(0 0,100% 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px)); }
+      .dir2 .purse .k{ font-size:8px; letter-spacing:.2em; color:#ffe39a; } .dir2 .purse .v{ font-family:'Orbitron'; font-weight:900; font-size:18px; color:var(--gold); }
+      .dir2 .trayrow{ display:flex; gap:9px; align-items:center; justify-content:center; padding:2px 20px 8px; }
+      .dir2 .traylbl{ font-size:9px; letter-spacing:.22em; color:#ffffff80; text-transform:uppercase; }
+      .dir2 .jk{ width:98px; height:48px; padding:5px 8px; background:#ffffff07; border:1px solid var(--violet); position:relative; clip-path:polygon(0 0,100% 0,100% 100%,8px 100%,0 calc(100% - 8px)); }
+      .dir2 .jk .nm{ font-family:'Orbitron'; font-weight:700; font-size:10px; } .dir2 .jk .ef{ font-size:8.5px; color:var(--cyan); }
+      .dir2 .jk .sell{ position:absolute; top:4px; right:6px; font-size:8px; color:var(--gold); }
+      .dir2 .jk.empty{ border-style:dashed; border-color:#ffffff26; display:flex; align-items:center; justify-content:center; color:#ffffff40; font-size:8px; letter-spacing:.18em; }
+      .dir2 .shoptitle{ text-align:center; font-family:'Orbitron'; font-weight:700; font-size:10px; letter-spacing:.34em; color:#7fdfff; padding:4px 0; }
+      .dir2 .shopwrap{ flex:1; display:flex; flex-direction:column; justify-content:center; padding:0 20px; }
+      .dir2 .item{ padding:12px 12px 11px; background:#ffffff06; display:flex; flex-direction:column; gap:5px; position:relative; min-height:148px;
+        clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%); }
+      .dir2 .item.common{ border:1px solid var(--cyan); background:#00e5ff0a; } .dir2 .item.rare{ border:1px solid var(--pink); background:#ff2e970d; } .dir2 .item.planet{ border:1px solid var(--gold); background:#ffc53d0d; }
+      .dir2 .rtag{ align-self:flex-start; font-family:'Orbitron'; font-weight:700; font-size:8px; letter-spacing:.18em; padding:3px 8px; }
+      .dir2 .common .rtag{ background:var(--cyan); color:#04222a; } .dir2 .rare .rtag{ background:var(--pink); color:#2a0014; } .dir2 .planet .rtag{ background:var(--gold); color:#241800; }
+      .dir2 .iname{ font-family:'Orbitron'; font-weight:800; font-size:14px; color:#fff; } .dir2 .ieff{ font-size:11px; color:#cfe6ff; flex:1; line-height:1.15; } .dir2 .ilvl{ font-size:9px; color:#ffffff90; }
+      .dir2 .ibuy{ display:flex; align-items:center; justify-content:space-between; }
+      .dir2 .cost{ font-family:'Orbitron'; font-weight:900; font-size:16px; color:var(--gold); }
+      .dir2 .footer{ display:flex; align-items:center; gap:12px; justify-content:center; padding:12px 0 16px; }
+      .dir2 .nextchip{ font-size:10px; color:#ffffff90; padding:5px 12px; border:1px solid #ffffff22; } .dir2 .nextchip b{ color:var(--gold); }
+      .dir2 .btn{ font-family:'Orbitron'; font-weight:700; font-size:11px; letter-spacing:.08em; text-transform:uppercase; padding:8px 16px; border:none; cursor:pointer; clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%); }
+      .dir2 .btn.buy{ background:var(--lime); color:#07210a; } .dir2 .btn.reroll{ background:transparent; color:var(--gold); border:1px solid var(--gold); } .dir2 .btn.cont{ background:var(--pink); color:#fff; padding:10px 26px; font-size:12px; }
+
+      /* =================================================================== */
+      /* DIRECTION 3 — VAPOR GLASS PREMIUM                                    */
+      /* =================================================================== */
+      .dir3{ background:radial-gradient(120% 90% at 80% 0%, #3a1a5e 0%, transparent 55%),
+          radial-gradient(120% 90% at 10% 100%, #0e2d4a 0%, transparent 55%), linear-gradient(160deg,#1b1030,#0a0815); font-family:'Rajdhani'; }
+      .dir3 .glass{ background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); backdrop-filter:blur(8px);
+        box-shadow:0 10px 30px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.18); }
+      .dir3 .top{ display:flex; align-items:center; gap:14px; padding:18px 22px 10px; }
+      .dir3 .cleared{ font-family:'Zen Dots'; font-size:18px; color:var(--lime); text-shadow:0 0 16px rgba(140,255,91,.6); }
+      .dir3 .cash{ padding:8px 16px; border-radius:14px; display:flex; flex-direction:column; background:linear-gradient(160deg, rgba(140,255,91,.28), rgba(140,255,91,.08)); border:1px solid rgba(140,255,91,.55); box-shadow:0 8px 22px rgba(140,255,91,.22); }
+      .dir3 .cash .k{ font-size:9px; letter-spacing:.18em; color:#d6ffc8; text-transform:uppercase; } .dir3 .cash .v{ font-weight:700; font-size:18px; color:#eaffd9; }
+      .dir3 .purse{ margin-left:auto; padding:8px 18px; border-radius:14px; display:flex; flex-direction:column; align-items:center; background:linear-gradient(160deg, rgba(255,197,61,.3), rgba(255,197,61,.08)); border:1px solid rgba(255,197,61,.55); box-shadow:0 8px 22px rgba(255,197,61,.22); }
+      .dir3 .purse .k{ font-size:9px; letter-spacing:.18em; color:#ffe7ad; text-transform:uppercase; } .dir3 .purse .v{ font-family:'Zen Dots'; font-size:20px; color:var(--gold); }
+      .dir3 .trayrow{ display:flex; gap:10px; align-items:center; justify-content:center; padding:2px 22px 10px; }
+      .dir3 .traylbl{ font-size:10px; letter-spacing:.18em; color:#ffffff90; text-transform:uppercase; }
+      .dir3 .jk{ width:100px; height:52px; border-radius:13px; padding:7px 10px; position:relative; }
+      .dir3 .jk .nm{ font-weight:700; font-size:11px; } .dir3 .jk .ef{ font-size:9px; color:#bfeaff; margin-top:1px; }
+      .dir3 .jk .sell{ position:absolute; top:5px; right:7px; font-size:9px; color:var(--gold); }
+      .dir3 .jk.empty{ background:rgba(255,255,255,.03); border:1px dashed rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; color:#ffffff55; font-size:9px; letter-spacing:.18em; }
+      .dir3 .shoptitle{ text-align:center; font-size:11px; letter-spacing:.28em; color:#ffffff90; text-transform:uppercase; padding:6px 0; }
+      .dir3 .shopwrap{ flex:1; display:flex; flex-direction:column; justify-content:center; padding:0 22px; }
+      .dir3 .item{ border-radius:18px; padding:14px; display:flex; flex-direction:column; gap:6px; position:relative; min-height:152px;
+        background:rgba(255,255,255,.06); backdrop-filter:blur(8px); box-shadow:0 10px 28px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+      .dir3 .item.common{ border:1px solid rgba(0,229,255,.6); } .dir3 .item.rare{ border:1px solid rgba(255,46,151,.6); } .dir3 .item.planet{ border:1px solid rgba(255,197,61,.6); }
+      .dir3 .rtag{ align-self:flex-start; font-size:9px; letter-spacing:.16em; font-weight:700; text-transform:uppercase; padding:3px 10px; border-radius:999px; }
+      .dir3 .common .rtag{ background:var(--cyan); color:#04222a; } .dir3 .rare .rtag{ background:var(--pink); color:#2a0014; } .dir3 .planet .rtag{ background:var(--gold); color:#241800; }
+      .dir3 .iname{ font-family:'Zen Dots'; font-size:15px; color:#fff; } .dir3 .ieff{ font-size:12px; color:#e6f0ff; flex:1; line-height:1.2; } .dir3 .ilvl{ font-size:10px; color:#ffffff90; }
+      .dir3 .ibuy{ display:flex; align-items:center; justify-content:space-between; }
+      .dir3 .cost{ font-family:'Zen Dots'; font-size:16px; color:var(--gold); }
+      .dir3 .footer{ display:flex; align-items:center; gap:12px; justify-content:center; padding:14px 0 18px; }
+      .dir3 .nextchip{ font-size:11px; color:#ffffff90; padding:6px 14px; border-radius:999px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.16); } .dir3 .nextchip b{ color:var(--gold); }
+      .dir3 .btn{ font-family:'Rajdhani'; font-weight:700; font-size:13px; letter-spacing:.05em; text-transform:uppercase; border-radius:12px; padding:9px 18px; border:none; cursor:pointer; }
+      .dir3 .btn.buy{ background:linear-gradient(180deg,#b6ff8f,#62d840); color:#06210a; box-shadow:0 6px 16px rgba(140,255,91,.35); }
+      .dir3 .btn.reroll{ background:rgba(255,255,255,.06); color:var(--gold); border:1px solid rgba(255,197,61,.6); }
+      .dir3 .btn.cont{ background:linear-gradient(180deg,#ff7bbf,#d61f86); color:#fff; box-shadow:0 8px 20px rgba(255,46,151,.4); padding:11px 28px; font-size:14px; }
+    </style>
+  </head>
+  <body>
+    <div class="head">
+      <h2>Mini Balatro — “The Shop” · 3 directions</h2>
+      <p>Same cash-out + shop (2 jokers, 1 planet, reroll, continue), three visual treatments. Pick 1, 2, or 3.</p>
+      <div class="legend">
+        <span class="role"><span class="dot" style="background:var(--cyan);color:var(--cyan)"></span>Common</span>
+        <span class="role"><span class="dot" style="background:var(--lime);color:var(--lime)"></span><b>Uncommon</b> <i>(lime, NEW)</i></span>
+        <span class="role"><span class="dot" style="background:var(--pink);color:var(--pink)"></span>Rare</span>
+        <span class="role"><span class="dot" style="background:var(--gold);color:var(--gold)"></span><b>Money / Cost</b> <i>(gold, NEW)</i></span>
+        <span class="role"><span class="dot" style="background:var(--violet);color:var(--violet)"></span>Frame</span>
+      </div>
+    </div>
+
+    <!-- ================= DIRECTION 1 ================= -->
+    <div class="band">
+      <div class="stage dir1">
+        <div class="top">
+          <span class="cleared">Blind Cleared!</span>
+          <div class="cash"><span class="k">Cash Out</span><span class="v">+$8</span></div>
+          <div class="purse"><span class="k">Money</span><span class="v">$12</span></div>
+        </div>
+        <div class="trayrow">
+          <span class="traylbl">Jokers</span>
+          <div class="jk"><span class="sell">$1</span><div class="nm">Jolly</div><div class="ef">+8 Mult if Pair</div></div>
+          <div class="jk"><span class="sell">$2</span><div class="nm">Mad</div><div class="ef">+10 Mult if 2 Pair</div></div>
+          <div class="jk empty">SLOT</div><div class="jk empty">SLOT</div><div class="jk empty">SLOT</div>
+        </div>
+        <div class="shoptitle">— Shop · Jokers &amp; Planets —</div>
+        <div class="shopwrap">
+          <div class="grid">
+            <div class="item common"><span class="rtag">Common</span><div class="iname">Even Steven</div><div class="ieff">+4 Mult per even card scored</div><div class="ibuy"><span class="cost">$4</span><button class="btn buy">Buy</button></div></div>
+            <div class="item planet"><span class="rtag">Planet</span><div class="iname">Saturn</div><div class="ieff">+30 Chips · +3 Mult</div><div class="ilvl">Straight · Lv 1 → 2</div><div class="ibuy"><span class="cost">$3</span><button class="btn buy">Buy</button></div></div>
+            <div class="item rare"><span class="rtag">Rare</span><div class="iname">The Duo</div><div class="ieff">×2 Mult if hand has a Pair</div><div class="ibuy"><span class="cost">$8</span><button class="btn buy">Buy</button></div></div>
+          </div>
+        </div>
+        <div class="footer">
+          <button class="btn reroll">⟲ Reroll $5</button>
+          <span class="nextchip">Next — Boss Blind · Target <b>360</b></span>
+          <button class="btn cont">Continue ▸</button>
+        </div>
+      </div>
+      <div class="caption"><b>1 · “Neon Felt Arcade”</b> — Monoton + Rubik Mono One on violet felt · rarity-glow item cards, gold purse, lime buys · matches the felt blind screen
+        <br><span class="sw" style="background:#ff2e97"></span><span class="sw" style="background:#b026ff"></span><span class="sw" style="background:#00e5ff"></span><span class="sw" style="background:#ffc53d"></span><span class="sw" style="background:#8cff5b"></span></div>
+    </div>
+
+    <!-- ================= DIRECTION 2 ================= -->
+    <div class="band">
+      <div class="stage dir2">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="top">
+          <span class="cleared">BLIND CLEARED</span>
+          <div class="cash"><span class="k">CASH OUT</span><span class="v">+$8</span></div>
+          <div class="purse"><span class="k">MONEY</span><span class="v">$12</span></div>
+        </div>
+        <div class="trayrow">
+          <span class="traylbl">Jokers</span>
+          <div class="jk"><span class="sell">$1</span><div class="nm">JOLLY</div><div class="ef">+8 Mult / Pair</div></div>
+          <div class="jk"><span class="sell">$2</span><div class="nm">MAD</div><div class="ef">+10 Mult / 2Pair</div></div>
+          <div class="jk empty">SLOT</div><div class="jk empty">SLOT</div><div class="jk empty">SLOT</div>
+        </div>
+        <div class="shoptitle">SHOP // JOKERS · PLANETS</div>
+        <div class="shopwrap">
+          <div class="grid">
+            <div class="item common"><span class="rtag">COMMON</span><div class="iname">Even Steven</div><div class="ieff">+4 Mult per even card scored</div><div class="ibuy"><span class="cost">$4</span><button class="btn buy">Buy</button></div></div>
+            <div class="item planet"><span class="rtag">PLANET</span><div class="iname">Saturn</div><div class="ieff">+30 Chips · +3 Mult</div><div class="ilvl">Straight · Lv 1 → 2</div><div class="ibuy"><span class="cost">$3</span><button class="btn buy">Buy</button></div></div>
+            <div class="item rare"><span class="rtag">RARE</span><div class="iname">The Duo</div><div class="ieff">×2 Mult if hand has a Pair</div><div class="ibuy"><span class="cost">$8</span><button class="btn buy">Buy</button></div></div>
+          </div>
+        </div>
+        <div class="footer">
+          <button class="btn reroll">⟲ REROLL $5</button>
+          <span class="nextchip">NEXT // BOSS · TGT <b>360</b></span>
+          <button class="btn cont">CONTINUE ▸</button>
+        </div>
+      </div>
+      <div class="caption"><b>2 · “Cyber HUD”</b> — Orbitron + Chakra Petch · clipped item cards, scanlines, corner brackets, monospace prices · sci-fi storefront
+        <br><span class="sw" style="background:#ff2e97"></span><span class="sw" style="background:#b026ff"></span><span class="sw" style="background:#00e5ff"></span><span class="sw" style="background:#ffc53d"></span><span class="sw" style="background:#8cff5b"></span></div>
+    </div>
+
+    <!-- ================= DIRECTION 3 ================= -->
+    <div class="band">
+      <div class="stage dir3">
+        <div class="top">
+          <span class="cleared">Blind Cleared!</span>
+          <div class="cash"><span class="k">Cash Out</span><span class="v">+$8</span></div>
+          <div class="purse"><span class="k">Money</span><span class="v">$12</span></div>
+        </div>
+        <div class="trayrow">
+          <span class="traylbl">Jokers</span>
+          <div class="jk glass"><span class="sell">$1</span><div class="nm">Jolly</div><div class="ef">+8 Mult if Pair</div></div>
+          <div class="jk glass"><span class="sell">$2</span><div class="nm">Mad</div><div class="ef">+10 Mult if 2 Pair</div></div>
+          <div class="jk empty">SLOT</div><div class="jk empty">SLOT</div><div class="jk empty">SLOT</div>
+        </div>
+        <div class="shoptitle">Shop · Jokers &amp; Planets</div>
+        <div class="shopwrap">
+          <div class="grid">
+            <div class="item common"><span class="rtag">Common</span><div class="iname">Even Steven</div><div class="ieff">+4 Mult per even card scored</div><div class="ibuy"><span class="cost">$4</span><button class="btn buy">Buy</button></div></div>
+            <div class="item planet"><span class="rtag">Planet</span><div class="iname">Saturn</div><div class="ieff">+30 Chips · +3 Mult</div><div class="ilvl">Straight · Lv 1 → 2</div><div class="ibuy"><span class="cost">$3</span><button class="btn buy">Buy</button></div></div>
+            <div class="item rare"><span class="rtag">Rare</span><div class="iname">The Duo</div><div class="ieff">×2 Mult if hand has a Pair</div><div class="ibuy"><span class="cost">$8</span><button class="btn buy">Buy</button></div></div>
+          </div>
+        </div>
+        <div class="footer">
+          <button class="btn reroll">⟲ Reroll $5</button>
+          <span class="nextchip">Next — Boss Blind · Target <b>360</b></span>
+          <button class="btn cont">Continue ▸</button>
+        </div>
+      </div>
+      <div class="caption"><b>3 · “Vapor Glass Premium”</b> — Zen Dots + Rajdhani · frosted-glass item cards, soft gold/lime gradients, glossy buttons · premium storefront
+        <br><span class="sw" style="background:#ff2e97"></span><span class="sw" style="background:#b026ff"></span><span class="sw" style="background:#00e5ff"></span><span class="sw" style="background:#ffc53d"></span><span class="sw" style="background:#8cff5b"></span></div>
+    </div>
+  </body>
+</html>

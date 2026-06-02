@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mini Balatro — Blind Screen · Design Pack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Monoton&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@600;700;800;900&family=Chakra+Petch:wght@500;600;700&family=Rubik+Mono+One&family=Zen+Dots&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *{ box-sizing: border-box; margin: 0; padding: 0; }
+      :root{
+        --violet:#b026ff; --cyan:#00e5ff; --pink:#ff2e97;
+        --gold:#ffc53d;  /* NEW — money / cost / reward / legendary */
+        --lime:#8cff5b;  /* NEW — go / gains / affordable / uncommon */
+        --ink:#fff;
+      }
+      body{
+        background: radial-gradient(circle at 50% -10%, #1a0723 0%, #0a0612 55%, #050208 100%);
+        background-attachment: fixed; color:#fff;
+        font-family:'Rajdhani', system-ui, sans-serif; min-height:100vh; padding-bottom:40px;
+      }
+      .head{ text-align:center; padding:30px 16px 6px; }
+      .head h2{ font-family:'Rajdhani'; font-size:22px; font-weight:700; letter-spacing:.04em; color:#e9dcff; }
+      .head p{ opacity:.6; font-size:13px; margin-top:6px; }
+
+      /* shared colour-role legend */
+      .legend{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:14px auto 4px; max-width:760px; }
+      .role{ display:flex; align-items:center; gap:7px; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+        color:#ffffffb0; border:1px solid #ffffff18; border-radius:999px; padding:5px 11px; background:#ffffff06; }
+      .dot{ width:12px; height:12px; border-radius:3px; box-shadow:0 0 8px currentColor; }
+      .role.new{ border-color:currentColor; }
+      .role.new b{ color:#fff; }
+
+      /* per-section band + caption */
+      .band{ padding:34px 16px 6px; border-top:1px solid #ffffff10; margin-top:26px; }
+      .stage{ width:100%; max-width:1000px; margin:0 auto; border-radius:22px; overflow:hidden; position:relative;
+        aspect-ratio: 16 / 10; min-height:560px; }
+      .caption{ font-family:ui-monospace, monospace; font-size:12px; color:#ffffffb0; text-align:center;
+        max-width:1000px; margin:14px auto 0; padding:10px 14px; border:1px dashed var(--violet); border-radius:10px; }
+      .caption b{ color:#fff; } .caption .sw{ display:inline-block; width:13px; height:13px; border-radius:3px; vertical-align:middle; margin:0 1px; }
+
+      /* ===== shared playing-card base ===== */
+      .pc{ position:relative; border-radius:11px; display:flex; align-items:center; justify-content:center;
+        font-family:'Rajdhani'; font-weight:700; }
+      .pc .tl,.pc .br{ position:absolute; font-size:15px; line-height:.9; display:flex; flex-direction:column; align-items:center; }
+      .pc .tl{ top:7px; left:8px; } .pc .br{ bottom:7px; right:8px; transform:rotate(180deg); }
+      .pc .pip{ font-size:30px; }
+      .pc.red{ color:var(--pink); } .pc.black{ color:var(--cyan); }
+
+      .hand{ display:flex; justify-content:center; align-items:flex-end; }
+
+      /* =================================================================== */
+      /* DIRECTION 1 — NEON FELT ARCADE                                       */
+      /* =================================================================== */
+      .dir1{ background:
+          radial-gradient(ellipse 120% 80% at 50% 26%, #34114e 0%, #1d0830 55%, #0c0418 100%);
+        box-shadow: inset 0 0 120px rgba(0,0,0,.7), inset 0 2px 0 rgba(255,255,255,.06), 0 0 40px rgba(176,38,255,.18);
+        display:flex; flex-direction:column; }
+      .dir1::before{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.5;
+        background:
+          repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0 2px, transparent 2px 7px),
+          repeating-linear-gradient(-45deg, rgba(0,0,0,.05) 0 2px, transparent 2px 7px); }
+      .dir1 .hud{ display:flex; align-items:stretch; gap:12px; padding:14px 16px; }
+      .dir1 .blindtok{ display:flex; flex-direction:column; gap:3px; align-items:center; justify-content:center;
+        padding:10px 18px; border-radius:14px; background:linear-gradient(160deg,#ff2e9733,#b026ff22);
+        border:1px solid var(--pink); box-shadow:0 0 18px rgba(255,46,151,.45), inset 0 0 18px rgba(0,0,0,.4); min-width:150px; }
+      .dir1 .blindtok .k{ font-size:10px; letter-spacing:.22em; color:#ffffff90; text-transform:uppercase; }
+      .dir1 .blindtok .v{ font-family:'Monoton'; font-size:22px; color:#fff; text-shadow:0 0 10px var(--pink); }
+      .dir1 .blindtok .m{ font-size:11px; color:var(--gold); font-weight:700; }
+      .dir1 .scorewrap{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+        border-radius:14px; background:rgba(0,0,0,.32); border:1px solid #ffffff14; }
+      .dir1 .scorewrap .k{ font-size:10px; letter-spacing:.28em; color:#ffffff80; text-transform:uppercase; }
+      .dir1 .scorewrap .big{ font-family:'Rubik Mono One'; font-size:34px; color:var(--cyan); text-shadow:0 0 16px var(--cyan); line-height:1; }
+      .dir1 .scorewrap .tgt{ font-size:12px; color:#ffffffb0; }
+      .dir1 .scorewrap .tgt b{ color:var(--gold); }
+      .dir1 .stats{ display:grid; grid-template-columns:repeat(2,auto); gap:7px; }
+      .dir1 .tile{ display:flex; flex-direction:column; align-items:center; padding:6px 12px; border-radius:10px;
+        background:rgba(255,255,255,.04); border:1px solid #ffffff16; min-width:62px; }
+      .dir1 .tile .k{ font-size:9px; letter-spacing:.16em; color:#ffffff80; text-transform:uppercase; }
+      .dir1 .tile .v{ font-family:'Rubik Mono One'; font-size:16px; }
+      .dir1 .tile.money .v{ color:var(--gold); text-shadow:0 0 10px rgba(255,197,61,.6); }
+
+      .dir1 .jokers{ display:flex; gap:9px; padding:4px 16px 8px; justify-content:center; }
+      .dir1 .jk{ width:96px; height:56px; border-radius:10px; padding:7px 9px; position:relative; overflow:hidden;
+        background:linear-gradient(160deg,#ffffff12,#ffffff04); border:1px solid var(--violet); box-shadow:0 0 12px rgba(176,38,255,.3); }
+      .dir1 .jk .nm{ font-size:12px; font-weight:700; color:#fff; } .dir1 .jk .ef{ font-size:9.5px; color:var(--cyan); line-height:1.05; margin-top:2px; }
+      .dir1 .jk .sell{ position:absolute; top:5px; right:6px; font-size:9px; color:var(--gold); font-weight:700; }
+      .dir1 .jk.empty{ border-style:dashed; border-color:#ffffff2e; background:transparent; box-shadow:none; display:flex; align-items:center; justify-content:center; }
+      .dir1 .jk.empty span{ font-size:9px; letter-spacing:.2em; color:#ffffff45; }
+
+      .dir1 .play{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:12px; padding-bottom:8px; }
+      .dir1 .handname{ font-family:'Monoton'; font-size:18px; color:#fff; text-shadow:0 0 12px var(--violet); letter-spacing:.02em; }
+      .dir1 .handname small{ font-family:'Rajdhani'; font-size:12px; color:var(--lime); letter-spacing:.1em; margin-left:8px; }
+      .dir1 .readout{ display:flex; align-items:stretch; gap:10px; }
+      .dir1 .chipbox,.dir1 .multbox{ display:flex; flex-direction:column; align-items:center; justify-content:center;
+        padding:8px 22px; border-radius:13px; min-width:120px; }
+      .dir1 .chipbox{ background:linear-gradient(180deg,#00e5ff26,#00e5ff0a); border:1.5px solid var(--cyan); box-shadow:0 0 20px rgba(0,229,255,.4), inset 0 0 20px rgba(0,0,0,.4); }
+      .dir1 .multbox{ background:linear-gradient(180deg,#ff2e9730,#ff2e970a); border:1.5px solid var(--pink); box-shadow:0 0 22px rgba(255,46,151,.5), inset 0 0 20px rgba(0,0,0,.4); }
+      .dir1 .chipbox .k,.dir1 .multbox .k{ font-size:9px; letter-spacing:.24em; text-transform:uppercase; }
+      .dir1 .chipbox .k{ color:#9beaff; } .dir1 .multbox .k{ color:#ffa9d4; }
+      .dir1 .chipbox .v{ font-family:'Rubik Mono One'; font-size:30px; color:var(--cyan); text-shadow:0 0 14px var(--cyan); }
+      .dir1 .multbox .v{ font-family:'Rubik Mono One'; font-size:30px; color:var(--pink); text-shadow:0 0 14px var(--pink); }
+      .dir1 .times{ display:flex; align-items:center; font-family:'Rubik Mono One'; font-size:26px; color:#fff; opacity:.85; }
+
+      .dir1 .hand{ gap:-6px; padding:2px 0 14px; }
+      .dir1 .pc{ width:78px; height:108px; margin:0 -5px; background:linear-gradient(165deg,#fdfbff,#d9d2ec);
+        border:2px solid #ffffff; box-shadow:0 8px 14px rgba(0,0,0,.5); transition:.2s; }
+      .dir1 .pc.red{ color:#ff1f6b; } .dir1 .pc.black{ color:#1b2440; }
+      .dir1 .pc.sel{ transform:translateY(-22px) rotate(-1deg); box-shadow:0 0 0 2px var(--lime), 0 14px 22px rgba(140,255,91,.4), 0 0 26px rgba(140,255,91,.5); }
+      .dir1 .actions{ display:flex; gap:10px; align-items:center; justify-content:center; padding:0 0 14px; }
+      .dir1 .btn{ font-family:'Rajdhani'; font-weight:700; letter-spacing:.06em; text-transform:uppercase; font-size:14px;
+        border-radius:11px; padding:11px 24px; border:none; cursor:pointer; }
+      .dir1 .btn.play{ background:linear-gradient(180deg,#a8ff7a,#5bd83a); color:#06210a; box-shadow:0 0 16px rgba(140,255,91,.6); }
+      .dir1 .btn.disc{ background:transparent; color:#fff; border:1px solid var(--cyan); box-shadow:0 0 10px rgba(0,229,255,.3) inset; }
+      .dir1 .btn.icon{ background:rgba(255,255,255,.05); color:#fff; border:1px solid #ffffff22; padding:11px 16px; }
+
+      /* =================================================================== */
+      /* DIRECTION 2 — CYBER HUD                                              */
+      /* =================================================================== */
+      .dir2{ background:#080611; box-shadow: inset 0 0 0 1px #00e5ff22, 0 0 40px rgba(0,229,255,.12); display:flex; flex-direction:column;
+        font-family:'Chakra Petch'; }
+      .dir2::before{ content:""; position:absolute; inset:0; pointer-events:none;
+        background:
+          linear-gradient(rgba(0,229,255,.045) 1px, transparent 1px) 0 0/100% 34px,
+          linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px) 0 0/34px 100%,
+          repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 3px); }
+      .dir2 .corner{ position:absolute; width:20px; height:20px; border:2px solid var(--cyan); pointer-events:none; opacity:.7; }
+      .dir2 .corner.tl{ top:10px; left:10px; border-right:0; border-bottom:0; }
+      .dir2 .corner.tr{ top:10px; right:10px; border-left:0; border-bottom:0; }
+      .dir2 .corner.bl{ bottom:10px; left:10px; border-right:0; border-top:0; }
+      .dir2 .corner.br{ bottom:10px; right:10px; border-left:0; border-top:0; }
+      .dir2 .clip{ clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%); }
+      .dir2 .hud{ display:flex; gap:10px; padding:18px 18px 8px; align-items:stretch; }
+      .dir2 .blindtok{ padding:9px 16px; background:#ff2e9714; border:1px solid var(--pink); position:relative; min-width:160px;
+        clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px); }
+      .dir2 .blindtok .k{ font-size:9px; letter-spacing:.28em; color:#ff8fc4; }
+      .dir2 .blindtok .v{ font-family:'Orbitron'; font-weight:900; font-size:18px; color:#fff; text-shadow:0 0 10px var(--pink); }
+      .dir2 .blindtok .m{ font-size:10px; color:var(--gold); font-weight:700; letter-spacing:.1em; }
+      .dir2 .scorewrap{ flex:1; display:flex; flex-direction:column; justify-content:center; padding:6px 18px; background:#00e5ff0a; border:1px solid #00e5ff33; }
+      .dir2 .scorewrap .k{ font-size:9px; letter-spacing:.34em; color:#7fdfff; }
+      .dir2 .scorewrap .row{ display:flex; align-items:baseline; gap:10px; }
+      .dir2 .scorewrap .big{ font-family:'Orbitron'; font-weight:900; font-size:30px; color:var(--cyan); text-shadow:0 0 14px var(--cyan); }
+      .dir2 .scorewrap .tgt{ font-family:'Orbitron'; font-size:15px; color:#ffffff80; } .dir2 .scorewrap .tgt b{ color:var(--gold); }
+      .dir2 .bar{ height:5px; margin-top:5px; background:#ffffff12; position:relative; }
+      .dir2 .bar i{ position:absolute; inset:0 64% 0 0; background:linear-gradient(90deg,var(--cyan),var(--lime)); box-shadow:0 0 10px var(--cyan); }
+      .dir2 .stats{ display:flex; gap:6px; }
+      .dir2 .tile{ display:flex; flex-direction:column; padding:7px 11px; background:#ffffff06; border:1px solid #ffffff1c; min-width:58px;
+        clip-path: polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%); }
+      .dir2 .tile .k{ font-size:8px; letter-spacing:.2em; color:#ffffff80; } .dir2 .tile .v{ font-family:'Orbitron'; font-weight:700; font-size:15px; }
+      .dir2 .tile.money .v{ color:var(--gold); }
+      .dir2 .jokers{ display:flex; gap:8px; padding:8px 18px; }
+      .dir2 .jk{ width:104px; height:52px; padding:6px 9px; background:#ffffff07; border:1px solid var(--violet); position:relative;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 calc(100% - 8px)); }
+      .dir2 .jk .nm{ font-family:'Orbitron'; font-weight:700; font-size:11px; } .dir2 .jk .ef{ font-size:9px; color:var(--cyan); margin-top:2px; }
+      .dir2 .jk .sell{ position:absolute; top:5px; right:7px; font-size:9px; color:var(--gold); }
+      .dir2 .jk.empty{ border-style:dashed; border-color:#ffffff26; display:flex; align-items:center; justify-content:center; color:#ffffff40; font-size:9px; letter-spacing:.2em; }
+      .dir2 .play{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:12px; padding-bottom:10px; }
+      .dir2 .handname{ font-family:'Orbitron'; font-weight:800; font-size:16px; letter-spacing:.08em; color:#fff; }
+      .dir2 .handname small{ font-family:'Chakra Petch'; color:var(--lime); font-size:11px; margin-left:8px; letter-spacing:.14em; }
+      .dir2 .readout{ display:flex; align-items:center; gap:8px; }
+      .dir2 .chipbox,.dir2 .multbox{ padding:7px 20px; display:flex; flex-direction:column; align-items:center;
+        clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+      .dir2 .chipbox{ background:#00e5ff18; border:1px solid var(--cyan); }
+      .dir2 .multbox{ background:#ff2e9720; border:1px solid var(--pink); }
+      .dir2 .chipbox .k,.dir2 .multbox .k{ font-size:8px; letter-spacing:.24em; }
+      .dir2 .chipbox .k{ color:#7fdfff; } .dir2 .multbox .k{ color:#ff8fc4; }
+      .dir2 .chipbox .v{ font-family:'Orbitron'; font-weight:900; font-size:26px; color:var(--cyan); text-shadow:0 0 12px var(--cyan); }
+      .dir2 .multbox .v{ font-family:'Orbitron'; font-weight:900; font-size:26px; color:var(--pink); text-shadow:0 0 12px var(--pink); }
+      .dir2 .times{ font-family:'Orbitron'; font-weight:900; font-size:22px; color:#fff; }
+      .dir2 .hand{ gap:6px; padding-bottom:12px; }
+      .dir2 .pc{ width:72px; height:100px; background:linear-gradient(165deg,#0e1630,#070b1c); border:1px solid var(--cyan);
+        box-shadow:0 0 10px rgba(0,229,255,.25), inset 0 0 16px rgba(0,0,0,.6); border-radius:6px; }
+      .dir2 .pc.red{ border-color:var(--pink); box-shadow:0 0 10px rgba(255,46,151,.3), inset 0 0 16px rgba(0,0,0,.6); }
+      .dir2 .pc.sel{ transform:translateY(-20px); box-shadow:0 0 0 1px var(--lime), 0 0 22px rgba(140,255,91,.5); border-color:var(--lime); }
+      .dir2 .actions{ display:flex; gap:9px; justify-content:center; padding-bottom:14px; }
+      .dir2 .btn{ font-family:'Orbitron'; font-weight:700; font-size:12px; letter-spacing:.1em; text-transform:uppercase; padding:11px 22px; border:none; cursor:pointer;
+        clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+      .dir2 .btn.play{ background:var(--lime); color:#07210a; box-shadow:0 0 16px rgba(140,255,91,.5); }
+      .dir2 .btn.disc{ background:transparent; color:var(--cyan); border:1px solid var(--cyan); }
+      .dir2 .btn.icon{ background:#ffffff08; color:#fff; border:1px solid #ffffff22; padding:11px 14px; }
+
+      /* =================================================================== */
+      /* DIRECTION 3 — VAPOR GLASS PREMIUM                                    */
+      /* =================================================================== */
+      .dir3{ background:
+          radial-gradient(120% 90% at 80% 0%, #3a1a5e 0%, transparent 55%),
+          radial-gradient(120% 90% at 10% 100%, #0e2d4a 0%, transparent 55%),
+          linear-gradient(160deg,#1b1030,#0a0815);
+        display:flex; flex-direction:column; font-family:'Rajdhani'; }
+      .dir3 .glass{ background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14);
+        backdrop-filter:blur(8px); box-shadow:0 10px 30px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.18); }
+      .dir3 .hud{ display:flex; gap:14px; padding:18px 20px 10px; align-items:stretch; }
+      .dir3 .blindtok{ padding:11px 20px; border-radius:18px; display:flex; flex-direction:column; gap:2px; justify-content:center; min-width:160px;
+        background:linear-gradient(160deg, rgba(255,46,151,.28), rgba(176,38,255,.16)); border:1px solid rgba(255,46,151,.5);
+        box-shadow:0 8px 24px rgba(255,46,151,.25), inset 0 1px 0 rgba(255,255,255,.25); }
+      .dir3 .blindtok .k{ font-size:10px; letter-spacing:.22em; color:#ffffffc0; text-transform:uppercase; }
+      .dir3 .blindtok .v{ font-family:'Zen Dots'; font-size:18px; color:#fff; }
+      .dir3 .blindtok .m{ font-size:11px; color:var(--gold); font-weight:700; }
+      .dir3 .scorewrap{ flex:1; border-radius:18px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+      .dir3 .scorewrap .k{ font-size:10px; letter-spacing:.3em; color:#ffffff90; text-transform:uppercase; }
+      .dir3 .scorewrap .big{ font-family:'Zen Dots'; font-size:30px; color:#fff; text-shadow:0 0 18px var(--cyan); }
+      .dir3 .scorewrap .tgt{ font-size:13px; color:#ffffffc0; } .dir3 .scorewrap .tgt b{ color:var(--gold); }
+      .dir3 .stats{ display:flex; gap:8px; }
+      .dir3 .tile{ border-radius:14px; padding:8px 13px; display:flex; flex-direction:column; align-items:center; min-width:60px; }
+      .dir3 .tile .k{ font-size:9px; letter-spacing:.14em; color:#ffffff90; text-transform:uppercase; } .dir3 .tile .v{ font-weight:700; font-size:17px; }
+      .dir3 .tile.money .v{ color:var(--gold); }
+      .dir3 .jokers{ display:flex; gap:10px; padding:6px 20px 8px; justify-content:center; }
+      .dir3 .jk{ width:104px; height:56px; border-radius:14px; padding:8px 11px; position:relative; }
+      .dir3 .jk .nm{ font-weight:700; font-size:12px; } .dir3 .jk .ef{ font-size:9.5px; color:#bfeaff; margin-top:2px; line-height:1.05; }
+      .dir3 .jk .sell{ position:absolute; top:6px; right:8px; font-size:9px; color:var(--gold); font-weight:700; }
+      .dir3 .jk.empty{ background:rgba(255,255,255,.03); border:1px dashed rgba(255,255,255,.2); box-shadow:none; backdrop-filter:none;
+        display:flex; align-items:center; justify-content:center; color:#ffffff55; font-size:9px; letter-spacing:.2em; }
+      .dir3 .play{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:14px; padding-bottom:10px; }
+      .dir3 .handname{ font-family:'Zen Dots'; font-size:15px; color:#fff; letter-spacing:.04em; }
+      .dir3 .handname small{ font-family:'Rajdhani'; color:var(--lime); font-weight:700; font-size:12px; margin-left:8px; }
+      .dir3 .readout{ display:flex; align-items:center; gap:12px; }
+      .dir3 .chipbox,.dir3 .multbox{ border-radius:16px; padding:9px 24px; display:flex; flex-direction:column; align-items:center; min-width:118px; }
+      .dir3 .chipbox{ background:linear-gradient(180deg, rgba(0,229,255,.32), rgba(0,229,255,.08)); border:1px solid rgba(0,229,255,.6);
+        box-shadow:0 8px 24px rgba(0,229,255,.3), inset 0 1px 0 rgba(255,255,255,.3); }
+      .dir3 .multbox{ background:linear-gradient(180deg, rgba(255,46,151,.36), rgba(255,46,151,.1)); border:1px solid rgba(255,46,151,.6);
+        box-shadow:0 8px 24px rgba(255,46,151,.3), inset 0 1px 0 rgba(255,255,255,.3); }
+      .dir3 .chipbox .k,.dir3 .multbox .k{ font-size:9px; letter-spacing:.22em; text-transform:uppercase; color:#ffffffd0; }
+      .dir3 .chipbox .v,.dir3 .multbox .v{ font-family:'Zen Dots'; font-size:26px; color:#fff; }
+      .dir3 .chipbox .v{ text-shadow:0 0 14px var(--cyan); } .dir3 .multbox .v{ text-shadow:0 0 14px var(--pink); }
+      .dir3 .times{ font-family:'Zen Dots'; font-size:22px; color:#fff; opacity:.9; }
+      .dir3 .hand{ gap:8px; padding-bottom:14px; }
+      .dir3 .pc{ width:74px; height:104px; border-radius:13px; background:linear-gradient(165deg, rgba(255,255,255,.92), rgba(225,220,240,.82));
+        border:1px solid rgba(255,255,255,.7); box-shadow:0 10px 22px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.9); }
+      .dir3 .pc.red{ color:#ff2e7a; } .dir3 .pc.black{ color:#26304f; }
+      .dir3 .pc.sel{ transform:translateY(-22px); box-shadow:0 0 0 2px var(--lime), 0 16px 26px rgba(140,255,91,.4); }
+      .dir3 .actions{ display:flex; gap:10px; justify-content:center; padding-bottom:16px; }
+      .dir3 .btn{ font-family:'Rajdhani'; font-weight:700; font-size:14px; letter-spacing:.06em; text-transform:uppercase; border-radius:14px; padding:12px 26px; border:none; cursor:pointer; }
+      .dir3 .btn.play{ background:linear-gradient(180deg,#b6ff8f,#62d840); color:#06210a; box-shadow:0 8px 20px rgba(140,255,91,.4), inset 0 1px 0 rgba(255,255,255,.4); }
+      .dir3 .btn.disc{ background:rgba(255,255,255,.08); color:#fff; border:1px solid rgba(255,255,255,.3); }
+      .dir3 .btn.icon{ background:rgba(255,255,255,.06); color:#fff; border:1px solid rgba(255,255,255,.2); padding:12px 16px; }
+    </style>
+  </head>
+  <body>
+    <div class="head">
+      <h2>Mini Balatro — “Playing a Blind” · 3 directions</h2>
+      <p>Same game state (Big Blind, Two Pair selected), three visual treatments. Pick 1, 2, or 3.</p>
+      <div class="legend">
+        <span class="role"><span class="dot" style="background:var(--cyan);color:var(--cyan)"></span>Chips</span>
+        <span class="role"><span class="dot" style="background:var(--pink);color:var(--pink)"></span>Mult</span>
+        <span class="role"><span class="dot" style="background:var(--violet);color:var(--violet)"></span>Frame</span>
+        <span class="role new" style="color:var(--gold)"><span class="dot" style="background:var(--gold);color:var(--gold)"></span><b>Gold</b> · money <i>NEW</i></span>
+        <span class="role new" style="color:var(--lime)"><span class="dot" style="background:var(--lime);color:var(--lime)"></span><b>Lime</b> · go/gains <i>NEW</i></span>
+      </div>
+    </div>
+
+    <!-- ================= DIRECTION 1 ================= -->
+    <div class="band">
+      <div class="stage dir1">
+        <div class="hud">
+          <div class="blindtok"><span class="k">Ante 1 / 8</span><span class="v">Big Blind</span><span class="m">×1.5 · Reward $4</span></div>
+          <div class="scorewrap"><span class="k">Round Score</span><span class="big">0</span><span class="tgt">Target <b>270</b></span></div>
+          <div class="stats">
+            <div class="tile money"><span class="k">Money</span><span class="v">$12</span></div>
+            <div class="tile"><span class="k">Deck</span><span class="v">39</span></div>
+            <div class="tile"><span class="k">Hands</span><span class="v">4</span></div>
+            <div class="tile"><span class="k">Discards</span><span class="v">3</span></div>
+          </div>
+        </div>
+        <div class="jokers">
+          <div class="jk"><span class="sell">$1</span><div class="nm">Jolly</div><div class="ef">+8 Mult if Pair</div></div>
+          <div class="jk"><span class="sell">$2</span><div class="nm">Mad</div><div class="ef">+10 Mult if Two Pair</div></div>
+          <div class="jk empty"><span>SLOT</span></div><div class="jk empty"><span>SLOT</span></div><div class="jk empty"><span>SLOT</span></div>
+        </div>
+        <div class="play">
+          <div class="handname">TWO PAIR <small>Lv 1</small></div>
+          <div class="readout">
+            <div class="chipbox"><span class="k">Chips</span><span class="v">30</span></div>
+            <div class="times">×</div>
+            <div class="multbox"><span class="k">Mult</span><span class="v">12</span></div>
+          </div>
+          <div class="hand">
+            <div class="pc red sel"><b class="tl">K<i>♦</i></b><span class="pip">♦</span><b class="br">K<i>♦</i></b></div>
+            <div class="pc black sel"><b class="tl">K<i>♣</i></b><span class="pip">♣</span><b class="br">K<i>♣</i></b></div>
+            <div class="pc red sel"><b class="tl">7<i>♥</i></b><span class="pip">♥</span><b class="br">7<i>♥</i></b></div>
+            <div class="pc black sel"><b class="tl">7<i>♠</i></b><span class="pip">♠</span><b class="br">7<i>♠</i></b></div>
+            <div class="pc black"><b class="tl">9<i>♠</i></b><span class="pip">♠</span><b class="br">9<i>♠</i></b></div>
+            <div class="pc red"><b class="tl">Q<i>♦</i></b><span class="pip">♦</span><b class="br">Q<i>♦</i></b></div>
+            <div class="pc red"><b class="tl">4<i>♦</i></b><span class="pip">♦</span><b class="br">4<i>♦</i></b></div>
+            <div class="pc black"><b class="tl">10<i>♣</i></b><span class="pip">♣</span><b class="br">10<i>♣</i></b></div>
+          </div>
+          <div class="actions">
+            <button class="btn play">Play Hand</button>
+            <button class="btn disc">Discard (3)</button>
+            <button class="btn icon">🂠 Deck</button>
+            <button class="btn icon">≡</button>
+          </div>
+        </div>
+      </div>
+      <div class="caption"><b>1 · “Neon Felt Arcade”</b> — title <b>Monoton</b>, numbers <b>Rubik Mono One</b>, body Rajdhani · violet felt table, chunky lifted cards, oversized Chips×Mult slot readout · closest to Balatro
+        <br><span class="sw" style="background:#ff2e97"></span><span class="sw" style="background:#b026ff"></span><span class="sw" style="background:#00e5ff"></span><span class="sw" style="background:#ffc53d"></span><span class="sw" style="background:#8cff5b"></span></div>
+    </div>
+
+    <!-- ================= DIRECTION 2 ================= -->
+    <div class="band">
+      <div class="stage dir2">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="hud">
+          <div class="blindtok"><span class="k">ANTE 1 / 8</span><span class="v">BIG BLIND</span><span class="m">×1.5 · $4</span></div>
+          <div class="scorewrap"><span class="k">ROUND SCORE</span><span class="row"><span class="big">0</span><span class="tgt">/ <b>270</b></span></span><span class="bar"><i></i></span></div>
+          <div class="stats">
+            <div class="tile money"><span class="k">$</span><span class="v">12</span></div>
+            <div class="tile"><span class="k">DECK</span><span class="v">39</span></div>
+            <div class="tile"><span class="k">HAND</span><span class="v">4</span></div>
+            <div class="tile"><span class="k">DISC</span><span class="v">3</span></div>
+          </div>
+        </div>
+        <div class="jokers">
+          <div class="jk"><span class="sell">$1</span><div class="nm">JOLLY</div><div class="ef">+8 Mult / Pair</div></div>
+          <div class="jk"><span class="sell">$2</span><div class="nm">MAD</div><div class="ef">+10 Mult / 2Pair</div></div>
+          <div class="jk empty">SLOT</div><div class="jk empty">SLOT</div><div class="jk empty">SLOT</div>
+        </div>
+        <div class="play">
+          <div class="handname">TWO PAIR <small>LV 1</small></div>
+          <div class="readout">
+            <div class="chipbox"><span class="k">CHIPS</span><span class="v">30</span></div>
+            <div class="times">×</div>
+            <div class="multbox"><span class="k">MULT</span><span class="v">12</span></div>
+          </div>
+          <div class="hand">
+            <div class="pc red sel"><b class="tl">K<i>♦</i></b><span class="pip">♦</span><b class="br">K<i>♦</i></b></div>
+            <div class="pc black sel"><b class="tl">K<i>♣</i></b><span class="pip">♣</span><b class="br">K<i>♣</i></b></div>
+            <div class="pc red sel"><b class="tl">7<i>♥</i></b><span class="pip">♥</span><b class="br">7<i>♥</i></b></div>
+            <div class="pc black sel"><b class="tl">7<i>♠</i></b><span class="pip">♠</span><b class="br">7<i>♠</i></b></div>
+            <div class="pc black"><b class="tl">9<i>♠</i></b><span class="pip">♠</span><b class="br">9<i>♠</i></b></div>
+            <div class="pc red"><b class="tl">Q<i>♦</i></b><span class="pip">♦</span><b class="br">Q<i>♦</i></b></div>
+            <div class="pc red"><b class="tl">4<i>♦</i></b><span class="pip">♦</span><b class="br">4<i>♦</i></b></div>
+            <div class="pc black"><b class="tl">10<i>♣</i></b><span class="pip">♣</span><b class="br">10<i>♣</i></b></div>
+          </div>
+          <div class="actions">
+            <button class="btn play">Play Hand</button>
+            <button class="btn disc">Discard · 3</button>
+            <button class="btn icon">DECK</button>
+            <button class="btn icon">MENU</button>
+          </div>
+        </div>
+      </div>
+      <div class="caption"><b>2 · “Cyber HUD”</b> — title <b>Orbitron</b>, body <b>Chakra Petch</b> · clipped/angular panels, scanlines + grid, corner brackets, progress bar to target · sci-fi command-deck feel
+        <br><span class="sw" style="background:#ff2e97"></span><span class="sw" style="background:#b026ff"></span><span class="sw" style="background:#00e5ff"></span><span class="sw" style="background:#ffc53d"></span><span class="sw" style="background:#8cff5b"></span></div>
+    </div>
+
+    <!-- ================= DIRECTION 3 ================= -->
+    <div class="band">
+      <div class="stage dir3">
+        <div class="hud">
+          <div class="blindtok"><span class="k">Ante 1 / 8</span><span class="v">Big Blind</span><span class="m">×1.5 · Reward $4</span></div>
+          <div class="scorewrap glass"><span class="k">Round Score</span><span class="big">0</span><span class="tgt">Target <b>270</b></span></div>
+          <div class="stats">
+            <div class="tile money glass"><span class="k">Money</span><span class="v">$12</span></div>
+            <div class="tile glass"><span class="k">Deck</span><span class="v">39</span></div>
+            <div class="tile glass"><span class="k">Hands</span><span class="v">4</span></div>
+            <div class="tile glass"><span class="k">Disc</span><span class="v">3</span></div>
+          </div>
+        </div>
+        <div class="jokers">
+          <div class="jk glass"><span class="sell">$1</span><div class="nm">Jolly</div><div class="ef">+8 Mult if Pair</div></div>
+          <div class="jk glass"><span class="sell">$2</span><div class="nm">Mad</div><div class="ef">+10 Mult if Two Pair</div></div>
+          <div class="jk empty">SLOT</div><div class="jk empty">SLOT</div><div class="jk empty">SLOT</div>
+        </div>
+        <div class="play">
+          <div class="handname">TWO PAIR <small>Lv 1</small></div>
+          <div class="readout">
+            <div class="chipbox"><span class="k">Chips</span><span class="v">30</span></div>
+            <div class="times">×</div>
+            <div class="multbox"><span class="k">Mult</span><span class="v">12</span></div>
+          </div>
+          <div class="hand">
+            <div class="pc red sel"><b class="tl">K<i>♦</i></b><span class="pip">♦</span><b class="br">K<i>♦</i></b></div>
+            <div class="pc black sel"><b class="tl">K<i>♣</i></b><span class="pip">♣</span><b class="br">K<i>♣</i></b></div>
+            <div class="pc red sel"><b class="tl">7<i>♥</i></b><span class="pip">♥</span><b class="br">7<i>♥</i></b></div>
+            <div class="pc black sel"><b class="tl">7<i>♠</i></b><span class="pip">♠</span><b class="br">7<i>♠</i></b></div>
+            <div class="pc black"><b class="tl">9<i>♠</i></b><span class="pip">♠</span><b class="br">9<i>♠</i></b></div>
+            <div class="pc red"><b class="tl">Q<i>♦</i></b><span class="pip">♦</span><b class="br">Q<i>♦</i></b></div>
+            <div class="pc red"><b class="tl">4<i>♦</i></b><span class="pip">♦</span><b class="br">4<i>♦</i></b></div>
+            <div class="pc black"><b class="tl">10<i>♣</i></b><span class="pip">♣</span><b class="br">10<i>♣</i></b></div>
+          </div>
+          <div class="actions">
+            <button class="btn play">Play Hand</button>
+            <button class="btn disc">Discard (3)</button>
+            <button class="btn icon">🂠 Deck</button>
+            <button class="btn icon">≡ Menu</button>
+          </div>
+        </div>
+      </div>
+      <div class="caption"><b>3 · “Vapor Glass Premium”</b> — title <b>Zen Dots</b>, body Rajdhani · frosted-glass panels, soft gradients + shadows, glossy cards · polished mobile-premium feel
+        <br><span class="sw" style="background:#ff2e97"></span><span class="sw" style="background:#b026ff"></span><span class="sw" style="background:#00e5ff"></span><span class="sw" style="background:#ffc53d"></span><span class="sw" style="background:#8cff5b"></span></div>
+    </div>
+  </body>
+</html>

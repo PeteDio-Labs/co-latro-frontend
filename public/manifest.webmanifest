@@ -1,0 +1,14 @@
+{
+  "name": "Mini Balatro",
+  "short_name": "Mini Balatro",
+  "description": "A neon Cyber-HUD roguelike poker game — hit the score, climb the antes.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#050208",
+  "theme_color": "#0a0612",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

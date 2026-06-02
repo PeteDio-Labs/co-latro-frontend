@@ -1,0 +1,267 @@
+@import "tailwindcss";
+
+/* Theme: "Neon Tube" (Asian-nightlife) — Monoton + Rajdhani on near-black.
+   Role-based palette: cyan=CHIPS, pink=MULT, violet=FRAME, gold=MONEY, lime=GO/GAINS. */
+@theme {
+  --color-neon-bg: #0a0612;
+  --color-neon-pink: #ff2e97;
+  --color-neon-violet: #b026ff;
+  --color-neon-cyan: #00e5ff;
+  --color-neon-gold: #ffc53d; /* money / cost / reward / legendary */
+  --color-neon-lime: #8cff5b; /* go / gains / affordable / uncommon */
+  --font-display: "Orbitron", system-ui, sans-serif;
+  --font-body: "Chakra Petch", "Rajdhani", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* iOS paints the notch / home-indicator insets and overscroll with the ROOT background —
+   set it dark so those areas match the theme instead of showing white bars. */
+html {
+  background: #050208;
+  color-scheme: dark;
+}
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: radial-gradient(circle at 50% -10%, #1a0723 0%, #0a0612 55%, #050208 100%), #050208;
+  background-attachment: fixed;
+  font-family: var(--font-body);
+  color: #fff;
+}
+
+/* Effects Tailwind utilities can't express as single classes (referenced as static class names in ui.ts). */
+.neon-text {
+  text-shadow: 0 0 6px var(--color-neon-pink), 0 0 18px var(--color-neon-violet);
+}
+.neon-cyan-text {
+  text-shadow: 0 0 8px var(--color-neon-cyan), 0 0 20px rgba(0, 229, 255, 0.4);
+}
+.neon-frame {
+  box-shadow: 0 0 16px rgba(176, 38, 255, 0.3);
+}
+.neon-btn {
+  box-shadow: 0 0 12px var(--color-neon-pink), 0 0 28px rgba(255, 46, 151, 0.45);
+}
+
+/* ===================================================================== */
+/* Cyber HUD theme layer — scanline backdrop, corner brackets, clipped    */
+/* panels/buttons/cards, scoreboard. Sizes are fluid via clamp().         */
+/* ===================================================================== */
+
+/* global HUD backdrop: faint grid + scanlines + top glow over the body bg */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    linear-gradient(rgba(0, 229, 255, 0.04) 1px, transparent 1px) 0 0 / 100% 38px,
+    linear-gradient(90deg, rgba(0, 229, 255, 0.035) 1px, transparent 1px) 0 0 / 38px 100%,
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.015) 0 1px, transparent 1px 3px),
+    radial-gradient(120% 70% at 50% -10%, rgba(176, 38, 255, 0.14), transparent 60%);
+}
+#app {
+  position: relative;
+  z-index: 1;
+  /* keep content clear of the notch / Dynamic Island / home indicator (viewport-fit:cover + PWA) */
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+}
+/* full-screen wrappers fill the viewport minus the safe-area insets that #app already pads,
+   so content never hides under a cutout and the page doesn't gain a scrollbar. env() is 0 in
+   regular browsers (no viewport-fit:cover effect) → identical to 100dvh there. */
+.cy-screen {
+  min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+
+/* fixed corner brackets — always-on HUD frame */
+.cy-corner {
+  position: fixed;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--color-neon-cyan);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 5;
+}
+.cy-corner--tl { top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); border-right: 0; border-bottom: 0; }
+.cy-corner--tr { top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); border-left: 0; border-bottom: 0; }
+.cy-corner--bl { bottom: max(10px, env(safe-area-inset-bottom)); left: max(10px, env(safe-area-inset-left)); border-right: 0; border-top: 0; }
+.cy-corner--br { bottom: max(10px, env(safe-area-inset-bottom)); right: max(10px, env(safe-area-inset-right)); border-left: 0; border-top: 0; }
+@media (max-width: 640px) { .cy-corner { width: 16px; height: 16px; } }
+
+/* RGB-split wordmark (white fill — recolor only via !text-* utilities) */
+.cy-title {
+  font-family: "Orbitron", system-ui, sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  line-height: 0.95;
+  color: #fff;
+  font-size: clamp(2rem, 8vw, 3.8rem);
+  text-shadow: -2px 0 var(--color-neon-pink), 2px 0 var(--color-neon-cyan), 0 0 28px rgba(0, 229, 255, 0.45);
+}
+
+/* terminal status strips */
+.cy-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: clamp(8px, 2.2vw, 10px);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #7fdfff;
+  padding: 10px 16px;
+}
+.cy-statusbar--top { border-bottom: 1px solid rgba(0, 229, 255, 0.18); }
+.cy-statusbar--foot { border-top: 1px solid rgba(0, 229, 255, 0.18); }
+.cy-online { display: inline-flex; align-items: center; gap: 6px; color: var(--color-neon-lime); }
+.cy-online::before {
+  content: "";
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--color-neon-lime); box-shadow: 0 0 8px var(--color-neon-lime);
+}
+
+/* angular clipped panels */
+.cy-panel {
+  background: rgba(0, 229, 255, 0.05);
+  border: 1px solid rgba(0, 229, 255, 0.28);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+}
+.cy-panel--tab { clip-path: polygon(0 0, 100% 0, 100% 100%, 12px 100%, 0 calc(100% - 12px)); }
+.cy-panel--solid { background: #0a0714; }
+.cy-panel--pink { background: rgba(255, 46, 151, 0.08); border-color: rgba(255, 46, 151, 0.5); }
+.cy-panel--gold { background: rgba(255, 197, 61, 0.08); border-color: rgba(255, 197, 61, 0.5); }
+.cy-panel--lime { background: rgba(140, 255, 91, 0.1); border-color: rgba(140, 255, 91, 0.5); }
+/* rarity / accent border overrides (declared after .cy-panel so they win) */
+.cy-bd-common { border-color: rgba(0, 229, 255, 0.55); }
+.cy-bd-uncommon { border-color: rgba(140, 255, 91, 0.55); }
+.cy-bd-rare { border-color: rgba(255, 46, 151, 0.55); }
+.cy-bd-planet { border-color: rgba(255, 197, 61, 0.55); }
+.cy-sel { box-shadow: 0 0 0 1px var(--color-neon-pink), 0 0 18px rgba(255, 46, 151, 0.4); }
+
+/* clipped buttons (≥44px touch target) */
+.cy-btn {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: clamp(11px, 2.6vw, 14px);
+  padding: 11px 20px;
+  min-height: 44px;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  touch-action: manipulation;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%);
+  transition: filter 0.15s, background 0.15s;
+}
+.cy-btn:hover { filter: brightness(1.15); }
+.cy-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
+.cy-btn--sm { min-height: 0; padding: 7px 12px; font-size: clamp(10px, 2.4vw, 12px); }
+.cy-btn--go { background: var(--color-neon-lime); color: #07210a; border-color: transparent; box-shadow: 0 0 16px rgba(140, 255, 91, 0.4); }
+.cy-btn--play { background: linear-gradient(90deg, rgba(255, 46, 151, 0.92), rgba(214, 31, 134, 0.95)); color: #fff; border-color: var(--color-neon-pink); box-shadow: 0 0 16px rgba(255, 46, 151, 0.4); }
+.cy-btn--ghost { color: #cfe9ff; border-color: rgba(0, 229, 255, 0.5); background: rgba(0, 229, 255, 0.05); }
+.cy-btn--gold { color: var(--color-neon-gold); border-color: rgba(255, 197, 61, 0.6); background: transparent; }
+
+/* stat tiles */
+.cy-tile {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 6px 11px; min-width: 56px;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.11);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%);
+}
+.cy-tile .k { font-size: clamp(8px, 2vw, 9px); letter-spacing: 0.18em; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; }
+.cy-tile .v { font-family: "Orbitron", sans-serif; font-weight: 800; font-size: clamp(13px, 3.4vw, 16px); color: #fff; }
+.cy-tile--money .v { color: var(--color-neon-gold); }
+
+/* playing cards (dark face, neon border, fluid width) */
+.cy-card {
+  position: relative;
+  width: clamp(2.6rem, 8.5vw, 4.5rem);
+  aspect-ratio: 5 / 7;
+  border-radius: 6px;
+  padding: clamp(3px, 1vw, 7px);
+  display: flex; flex-direction: column; justify-content: space-between;
+  background: linear-gradient(165deg, #0e1630, #070b1c);
+  border: 1px solid var(--color-neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.22), inset 0 0 16px rgba(0, 0, 0, 0.6);
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+}
+.cy-card .r { font-family: "Chakra Petch", sans-serif; font-weight: 700; font-size: clamp(11px, 3vw, 18px); line-height: 1; }
+.cy-card .p { align-self: center; font-size: clamp(17px, 5vw, 30px); line-height: 1; }
+.cy-card .b { align-self: flex-end; transform: rotate(180deg); }
+.cy-card--red { border-color: var(--color-neon-pink); box-shadow: 0 0 10px rgba(255, 46, 151, 0.28), inset 0 0 16px rgba(0, 0, 0, 0.6); }
+.cy-card--red .r, .cy-card--red .p { color: var(--color-neon-pink); }
+.cy-card--black .r, .cy-card--black .p { color: var(--color-neon-cyan); }
+.cy-card--sel { transform: translateY(-14px); border-color: var(--color-neon-lime); box-shadow: 0 0 0 1px var(--color-neon-lime), 0 0 22px rgba(140, 255, 91, 0.5); }
+.cy-card--scoring, .cy-card--pop { transform: translateY(-14px); border-color: var(--color-neon-pink); box-shadow: 0 0 0 1px var(--color-neon-pink), 0 0 22px rgba(255, 46, 151, 0.55); }
+.cy-card--dim { opacity: 0.4; }
+
+/* chips × mult scoreboard */
+.cy-chip, .cy-mult {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 6px clamp(12px, 4vw, 22px);
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+}
+.cy-chip { background: rgba(0, 229, 255, 0.16); border: 1px solid var(--color-neon-cyan); }
+.cy-mult { background: rgba(255, 46, 151, 0.2); border: 1px solid var(--color-neon-pink); }
+.cy-chip .k, .cy-mult .k { font-size: clamp(7px, 2vw, 9px); letter-spacing: 0.22em; text-transform: uppercase; }
+.cy-chip .k { color: #7fdfff; }
+.cy-mult .k { color: #ff8fc4; }
+.cy-chip .v, .cy-mult .v { font-family: "Orbitron", sans-serif; font-weight: 900; font-size: clamp(1.3rem, 5vw, 1.75rem); }
+.cy-chip .v { color: var(--color-neon-cyan); text-shadow: 0 0 12px var(--color-neon-cyan); }
+.cy-mult .v { color: var(--color-neon-pink); text-shadow: 0 0 12px var(--color-neon-pink); }
+.cy-times { font-family: "Orbitron", sans-serif; font-weight: 900; font-size: clamp(1.1rem, 4vw, 1.5rem); color: #fff; }
+
+/* rarity tags */
+.cy-tag { align-self: flex-start; font-family: "Orbitron", sans-serif; font-weight: 700; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; padding: 3px 8px; }
+.cy-tag--common { background: var(--color-neon-cyan); color: #04222a; }
+.cy-tag--uncommon { background: var(--color-neon-lime); color: #07210a; }
+.cy-tag--rare { background: var(--color-neon-pink); color: #2a0014; }
+.cy-tag--planet { background: var(--color-neon-gold); color: #241800; }
+
+/* jokers */
+.cy-joker {
+  position: relative;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--color-neon-violet);
+  box-shadow: 0 0 12px rgba(176, 38, 255, 0.25);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+.cy-joker--fire { transform: translateY(-8px); border-color: var(--color-neon-pink); box-shadow: 0 0 0 1px var(--color-neon-pink), 0 0 20px rgba(255, 46, 151, 0.6); }
+.cy-slot {
+  display: flex; align-items: center; justify-content: center;
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.28); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+.cy-mini { font-size: 10px; line-height: 1; padding: 2px 6px; border: 1px solid rgba(176, 38, 255, 0.4); color: #fff; background: transparent; cursor: pointer; }
+.cy-mini:disabled { opacity: 0.3; cursor: not-allowed; }
+.cy-mini--gold { background: var(--color-neon-gold); color: #241800; border-color: transparent; font-weight: 700; }
+
+/* menu decorative card fan */
+.cy-fan { position: relative; height: clamp(90px, 16vw, 120px); display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
+.cy-fan .c { position: absolute; width: clamp(48px, 9vw, 72px); aspect-ratio: 5 / 7; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: "Chakra Petch", sans-serif; font-weight: 700; font-size: clamp(18px, 4vw, 28px); background: linear-gradient(165deg, #0e1630, #070b1c); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5); }
+.cy-fan .c1 { transform: rotate(-16deg) translateX(-42px); border: 1px solid var(--color-neon-cyan); color: var(--color-neon-cyan); }
+.cy-fan .c2 { transform: translateY(-6px); border: 1px solid var(--color-neon-gold); color: var(--color-neon-gold); z-index: 2; box-shadow: 0 0 18px rgba(255, 197, 61, 0.35); }
+.cy-fan .c3 { transform: rotate(16deg) translateX(42px); border: 1px solid var(--color-neon-pink); color: var(--color-neon-pink); }
+
+/* boss-blind danger tint (overlay added when the screen wrapper has .cy-boss) */
+.cy-boss::after {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(120% 70% at 50% -10%, rgba(255, 46, 151, 0.2), transparent 60%);
+}
+
+/* short landscape (phones held sideways): compact so the board fits with minimal scroll */
+@media (orientation: landscape) and (max-height: 540px) {
+  .cy-card { width: 2.5rem; }
+  .cy-chip, .cy-mult { padding: 4px 14px; }
+  .cy-chip .v, .cy-mult .v { font-size: 1.3rem; }
+  .cy-fan { display: none; }
+  .cy-title { font-size: clamp(1.6rem, 6vw, 2.6rem); }
+}
