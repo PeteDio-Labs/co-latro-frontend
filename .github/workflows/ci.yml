@@ -1,0 +1,39 @@
+# Co-latro frontend — Workflow A (App CI/CD).
+#   PR            → typecheck + build (dist/)
+#   push to main  → build + upload dist/ to the MinIO bucket `co-latro-frontend`
+#
+# The build's API calls are all relative (/api/...); nginx on the poker-api VM serves dist/
+# and reverse-proxies /api to the backend on :3020 (same origin, no CORS). See deploy/nginx.conf.
+name: ci
+
+on:
+  pull_request: {}
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux, x64, homelab]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      # `bun run build` is `tsc --noEmit && vite build`, so this covers typecheck too.
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Build
+        run: bun run build
+
+      # main: publish dist/ to MinIO (S3-compatible).
+      - name: Upload to MinIO
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        env:
+          MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+          MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+          MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+          MINIO_BUCKET: co-latro-frontend
+        run: ./scripts/deploy.sh
