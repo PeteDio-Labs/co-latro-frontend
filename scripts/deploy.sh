@@ -30,8 +30,10 @@ fi
 echo "==> Configuring MinIO alias"
 "$MC" alias set colatro "${MINIO_ENDPOINT}" "${MINIO_ACCESS_KEY}" "${MINIO_SECRET_KEY}"
 
-# Make sure the bucket exists (idempotent).
-"$MC" mb --ignore-existing "colatro/${BUCKET}"
+# The bucket is provisioned out-of-band (scripts/reseed-minio-frontend-ci-vault.sh in
+# petedio-iac). The CI svcacct is least-privilege — List/Get/Put/Delete on the bucket,
+# but NOT CreateBucket — so we do NOT `mc mb` here (it Access-Denies even with
+# --ignore-existing, since MinIO still authorizes the create). CI only writes objects.
 
 echo "==> Mirroring dist/ -> colatro/${BUCKET}"
 # --overwrite updates changed files; --remove deletes bucket objects no longer in dist/
