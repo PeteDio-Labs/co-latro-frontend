@@ -1,15 +1,24 @@
-# Co-latro frontend — Workflow A (App CI/CD).
+# Co-latro frontend — Workflow A (App CI/CD), publish-on-merge.
 #   PR            → typecheck + build (dist/)
 #   push to main  → build + upload dist/ to the MinIO bucket `co-latro-frontend`
 #
 # The build's API calls are all relative (/api/...); nginx on the poker-api VM serves dist/
 # and reverse-proxies /api to the backend on :3020 (same origin, no CORS). See deploy/nginx.conf.
+#
+# MinIO write creds come from Vault via GitHub OIDC (colatro-ci role → colatro-ci policy,
+# secret kv/services/minio-frontend-ci), NOT repo Actions secrets. Runs on the in-homelab
+# self-hosted runner (VM 232) so it can reach MinIO (.221) + Vault (.223). The on-VM
+# refresh (pull bucket → web root) is the manual deploy.yml.
 name: ci
 
 on:
   pull_request: {}
   push:
     branches: [main]
+
+permissions:
+  contents: read
+  id-token: write # mint the GitHub OIDC token vault-action exchanges for a Vault token
 
 jobs:
   build:
@@ -28,12 +37,31 @@ jobs:
       - name: Build
         run: bun run build
 
+      # vault-action's caCertificate wants base64 PEM; a `with:` can't read a file.
+      - name: Encode Vault CA
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        id: vault_ca
+        run: echo "b64=$(base64 -w0 .github/vault-ca.crt)" >> "$GITHUB_OUTPUT"
+
+      - name: Vault — mint MinIO write creds via OIDC
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        uses: hashicorp/vault-action@v3
+        with:
+          url: https://192.168.50.223:8200
+          method: jwt
+          path: jwt-github # non-default mount — must be explicit or Vault 403s
+          role: colatro-ci
+          jwtGithubAudience: https://github.com/PeteDio-Labs
+          caCertificate: ${{ steps.vault_ca.outputs.b64 }}
+          exportEnv: true
+          secrets: |
+            kv/data/services/minio-frontend-ci endpoint | MINIO_ENDPOINT ;
+            kv/data/services/minio-frontend-ci access_key | MINIO_ACCESS_KEY ;
+            kv/data/services/minio-frontend-ci secret_key | MINIO_SECRET_KEY
+
       # main: publish dist/ to MinIO (S3-compatible).
       - name: Upload to MinIO
         if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
         env:
-          MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
-          MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
-          MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
           MINIO_BUCKET: co-latro-frontend
         run: ./scripts/deploy.sh
