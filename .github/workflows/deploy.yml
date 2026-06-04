@@ -1,0 +1,61 @@
+# Co-latro frontend — manual deploy to LXC 230 (publish-then-deploy model).
+# ci.yml publishes dist/ to the MinIO bucket on merge; THIS workflow refreshes the
+# LIVE site — it SSHes to 230 and re-syncs the web root from the bucket (the same
+# `mc mirror bucket → /var/www/co-latro` the petedio-iac rollout does). No build here;
+# it just makes the already-published dist live. Static assets are hashed, so this is
+# safe to run any time.
+#
+# The box ALREADY has its `colatro-minio` mc alias configured (by the petedio-iac
+# Ansible rollout, using the read-only minio-frontend cred). So this workflow needs
+# NO MinIO creds — it just re-runs `mc mirror` over SSH using that stored alias. Only
+# the LXC SSH key comes from Vault (colatro-ci). Runs on the in-homelab runner.
+name: deploy
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  VM_HOST: 192.168.50.230
+  WEB_ROOT: /var/www/co-latro
+  BUCKET: co-latro-frontend
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, x64, homelab]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Encode Vault CA
+        id: vault_ca
+        run: echo "b64=$(base64 -w0 .github/vault-ca.crt)" >> "$GITHUB_OUTPUT"
+
+      # Only the LXC SSH key — no MinIO creds (the box's mc alias is already set).
+      - name: Vault — mint LXC SSH key via OIDC
+        uses: hashicorp/vault-action@v3
+        with:
+          url: https://192.168.50.223:8200
+          method: jwt
+          path: jwt-github
+          role: colatro-ci
+          jwtGithubAudience: https://github.com/PeteDio-Labs
+          caCertificate: ${{ steps.vault_ca.outputs.b64 }}
+          exportEnv: true
+          secrets: |
+            kv/data/iac/lxc-ssh private_key | LXC_SSH_KEY
+
+      - name: Refresh the live web root from the bucket
+        run: |
+          set -euo pipefail
+          KEY="$(mktemp)"; chmod 600 "$KEY"; printf '%s\n' "$LXC_SSH_KEY" > "$KEY"
+          trap 'rm -f "$KEY"' EXIT
+          # Re-run the box's own mc mirror using its pre-configured colatro-minio alias
+          # (set by the iac rollout) — no creds cross the wire.
+          ssh -i "$KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 "root@$VM_HOST" \
+            "mc mirror --overwrite --remove colatro-minio/$BUCKET $WEB_ROOT && \
+             chown -R www-data:www-data $WEB_ROOT && \
+             curl -sS -o /dev/null -w 'live / -> %{http_code}\n' http://127.0.0.1/"
+          echo "Frontend refreshed on VM 230."

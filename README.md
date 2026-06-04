@@ -50,6 +50,10 @@ vite.config.ts          /api → :3020 proxy, host: true (LAN)
 
 ## Deploy / CI
 
-A static build (`bun run build` → `dist/`) served by any static host or container. Serve it behind the same
-origin as the backend `/api`, or repoint the proxy/base URL at the deployed API. Pipeline config lives with
-the CI workflow.
+A static build (`bun run build` → `dist/`). Every API call is **relative** (`/api/...`), so it must be
+served **same-origin** with the backend — `deploy/nginx.conf` (for the poker-api VM) serves `dist/` and
+reverse-proxies `/api` → `http://127.0.0.1:3020`.
+
+CI (`.github/workflows/ci.yml`, Workflow A on the self-hosted homelab runner): **PR** → typecheck + build;
+**merge to `main`** → build + upload `dist/` to the MinIO bucket `co-latro-frontend` via `scripts/deploy.sh`
+(nginx serves the bucket contents on the VM).
