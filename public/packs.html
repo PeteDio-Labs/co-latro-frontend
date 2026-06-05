@@ -67,7 +67,7 @@
         <span class="counter" id="counter">1 / 5</span>
         <button class="arrow" id="next">Next ›</button>
       </div>
-      <div class="hint">Click a tab, use <b>‹ Prev / Next ›</b>, or press <b>←</b> / <b>→</b> to flip through all screens. One live server — <b>localhost:5173/packs.html</b>.</div>
+      <div class="hint"><b>←</b> / <b>→</b> flip packs · <b>↑</b> / <b>↓</b> scroll the design · tabs &amp; <b>‹ Prev / Next ›</b> too. One live server — <b>localhost:5173/packs.html</b>.</div>
     </div>
     <div class="stage">
       <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
@@ -112,9 +112,20 @@
 
       document.getElementById("prev").addEventListener("click", () => go(idx - 1));
       document.getElementById("next").addEventListener("click", () => go(idx + 1));
+      // scroll the currently-shown pack (inside the same-origin iframe)
+      function scrollFrame(dy) {
+        const win = frame.contentWindow;
+        if (win) win.scrollBy({ top: dy, behavior: "smooth" });
+      }
       window.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowLeft")  go(idx - 1);
-        if (e.key === "ArrowRight") go(idx + 1);
+        if (e.key === "ArrowLeft")  { go(idx - 1); }
+        else if (e.key === "ArrowRight") { go(idx + 1); }
+        else if (e.key === "ArrowUp")   { e.preventDefault(); scrollFrame(-Math.round(window.innerHeight * 0.85)); }
+        else if (e.key === "ArrowDown") { e.preventDefault(); scrollFrame( Math.round(window.innerHeight * 0.85)); }
+        else if (e.key === "PageUp")    { e.preventDefault(); scrollFrame(-Math.round(window.innerHeight * 0.95)); }
+        else if (e.key === "PageDown" || e.key === " ") { e.preventDefault(); scrollFrame(Math.round(window.innerHeight * 0.95)); }
+        else if (e.key === "Home")      { e.preventDefault(); frame.contentWindow?.scrollTo({ top: 0, behavior: "smooth" }); }
+        else if (e.key === "End")       { e.preventDefault(); const d = frame.contentDocument; if (d) frame.contentWindow.scrollTo({ top: d.body.scrollHeight, behavior: "smooth" }); }
       });
 
       // honor a #pack-file hash on load (e.g. packs.html#shop-pack.html), else start at the first
