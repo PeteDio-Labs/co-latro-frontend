@@ -329,8 +329,10 @@ body {
    PLAY SCREEN (blind-pack.html) — kept under .dir2 namespace
    ===================================================================== */
 .dir2 .clip{ clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%); }
-.dir2 .hud{ display:flex; gap:10px; padding:18px 18px 8px; align-items:stretch; border-bottom:0; }
-.dir2 .blindtok{ padding:9px 16px; background:#ff2e9714; border:1px solid var(--pink); position:relative; min-width:160px; clip-path:polygon(10px 0,100% 0,100% 100%,0 100%,0 10px); }
+.dir2 .hud{ display:flex; gap:10px; padding:16px 18px 6px; align-items:flex-start; border-bottom:0; }
+/* play-screen blind chip — override the ante tarot-token .blindtok (width:210/min-height:236) */
+.dir2 .blindtok{ width:auto; min-width:160px; min-height:0; padding:9px 16px; gap:0; display:block; background:#ff2e9714; border:1px solid var(--pink); position:relative; clip-path:polygon(10px 0,100% 0,100% 100%,0 100%,0 10px); }
+.dir2 .blindtok .v{ display:block; }
 .dir2 .blindtok .k{ font-size:9px; letter-spacing:.28em; color:#ff8fc4; }
 .dir2 .blindtok .v{ font-family:'Orbitron'; font-weight:900; font-size:18px; color:#fff; text-shadow:0 0 10px var(--pink); }
 .dir2 .blindtok .m{ font-size:10px; color:var(--gold); font-weight:700; letter-spacing:.1em; }
