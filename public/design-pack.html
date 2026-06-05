@@ -3,204 +3,157 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mini Balatro — Design Pack</title>
+    <title>Co-latro — Cyber HUD Style Study</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Monoton&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@600;800&family=Chakra+Petch:wght@500;600;700&family=Zen+Dots&family=Michroma&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Chakra+Petch:wght@500;600;700&family=Rajdhani:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { background: #050208; color: #fff; font-family: system-ui, sans-serif; }
-      .head {
-        text-align: center; padding: 28px 16px 8px;
-        font-family: system-ui; color: #c9b8ff;
-      }
-      .head h2 { font-size: 20px; font-weight: 700; letter-spacing: .04em; }
-      .head p { opacity: .6; font-size: 13px; margin-top: 6px; }
-
-      /* ---- per-theme tokens ---- */
-      .col {
-        min-height: 92vh; padding: 40px 20px; display: flex; flex-direction: column;
-        align-items: center; gap: 22px; border-top: 1px solid rgba(255,255,255,.08);
-      }
-      .col.a {
-        --bg1: #1a0723; --bg2: #0a0612; --pink: #ff2e97; --violet: #b026ff; --cyan: #00e5ff;
-        --title: "Monoton", cursive; --body: "Rajdhani", sans-serif; --titlesize: 64px;
-      }
-      .col.b {
-        --bg1: #1a0536; --bg2: #0b0118; --pink: #ff1f8f; --violet: #8b2fff; --cyan: #2de2ff;
-        --title: "Orbitron", sans-serif; --body: "Chakra Petch", sans-serif; --titlesize: 44px;
-      }
-      .col.c {
-        --bg1: #2a1247; --bg2: #1a0b2e; --pink: #ff6ad5; --violet: #c774e8; --cyan: #26c6da;
-        --title: "Zen Dots", sans-serif; --body: "Michroma", sans-serif; --titlesize: 40px;
-      }
-      .col {
-        background: radial-gradient(circle at 50% -10%, var(--bg1) 0%, var(--bg2) 60%, #050208 100%);
-        font-family: var(--body);
-      }
-
-      .title {
-        font-family: var(--title); font-size: var(--titlesize); line-height: 1.05;
-        text-align: center; color: #fff; letter-spacing: .02em;
-        text-shadow: 0 0 6px var(--pink), 0 0 18px var(--pink), 0 0 38px var(--violet);
-      }
-      .tagline { font-family: var(--body); color: var(--cyan); opacity: .85; letter-spacing: .12em; text-transform: uppercase; font-size: 13px; }
-
-      .menu { display: flex; gap: 14px; }
-      .btn {
-        font-family: var(--body); font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-        border-radius: 12px; padding: 12px 26px; cursor: pointer; border: 1px solid transparent; font-size: 15px;
-      }
-      .btn.primary {
-        background: var(--pink); color: #100018; border: none;
-        box-shadow: 0 0 12px var(--pink), 0 0 28px rgba(255,46,151,.5);
-      }
-      .btn.ghost { background: transparent; color: #fff; border: 1px solid var(--violet); box-shadow: 0 0 10px rgba(176,38,255,.4) inset; }
-      .btn.wide { width: 100%; }
-      .btn.sm { padding: 8px 18px; font-size: 13px; }
-
-      .cards { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-      .card {
-        width: 80px; height: 112px; border-radius: 10px; position: relative;
-        background: linear-gradient(160deg, #ffffff14, #ffffff06);
-        border: 1.5px solid var(--cyan); box-shadow: 0 0 10px rgba(0,229,255,.35), inset 0 0 18px rgba(0,0,0,.5);
-        backdrop-filter: blur(2px); padding: 8px;
-      }
-      .card.red { border-color: var(--pink); box-shadow: 0 0 10px rgba(255,46,151,.4), inset 0 0 18px rgba(0,0,0,.5); }
-      .card .r { font-family: var(--body); font-weight: 700; font-size: 18px; display: block; }
-      .card .r.b { position: absolute; bottom: 8px; right: 8px; transform: rotate(180deg); }
-      .card .s { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 34px; }
-      .card.black { color: var(--cyan); text-shadow: 0 0 8px var(--cyan); }
-      .card.red { color: var(--pink); text-shadow: 0 0 8px var(--pink); }
-
-      .panel {
-        width: 100%; max-width: 340px; border: 1px solid var(--violet); border-radius: 16px; padding: 18px 20px;
-        background: rgba(255,255,255,.03); box-shadow: 0 0 16px rgba(176,38,255,.25); display: flex; flex-direction: column; gap: 10px; align-items: center;
-      }
-      .eyebrow { font-family: var(--body); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #ffffff80; }
-      .blindname { font-family: var(--title); font-size: 26px; color: #fff; text-shadow: 0 0 8px var(--violet); }
-      .pips { display: flex; gap: 8px; }
-      .pips i { width: 13px; height: 13px; border-radius: 50%; background: #ffffff18; border: 1px solid var(--violet); }
-      .pips i.on { background: var(--pink); box-shadow: 0 0 10px var(--pink); border: none; }
-      .scorebox { text-align: center; display: flex; flex-direction: column; gap: 2px; }
-      .score { font-family: var(--title); font-size: 38px; color: var(--cyan); text-shadow: 0 0 12px var(--cyan); }
-      .reward { font-family: var(--body); font-size: 12px; color: #ffffff90; }
-
-      .shop .planet { font-family: var(--title); font-size: 22px; color: var(--pink); text-shadow: 0 0 10px var(--pink); }
-      .shop .planeteff { font-family: var(--body); color: var(--cyan); font-weight: 600; }
-      .shop .lvl { font-family: var(--body); font-size: 12px; color: #ffffff90; }
-      .shoprow { display: flex; align-items: center; gap: 16px; }
-      .cost { font-family: var(--body); font-weight: 700; font-size: 20px; color: #ffe16a; }
-
-      .caption {
-        font-family: ui-monospace, monospace; font-size: 12px; color: #ffffffaa;
-        text-align: center; padding: 8px 14px; border: 1px dashed var(--violet); border-radius: 8px; margin-top: 6px;
-      }
-      .caption b { color: #fff; }
-      .swatches { display: inline-flex; gap: 6px; vertical-align: middle; margin-left: 6px; }
-      .sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
-    </style>
+    <link rel="stylesheet" href="cyber.css" />
   </head>
-  <body>
-    <div class="head">
-      <h2>Mini Balatro — Neon Design Pack</h2>
-      <p>Three "Asian nightlife" directions. Pick A, B, or C and I'll apply it across every screen.</p>
+  <body class="ds">
+    <div class="wrap">
+      <div class="head">
+        <div class="kicker">DESIGN SYSTEM</div>
+        <h1>CYBER HUD</h1>
+        <p>The single visual language for Co-latro — palette, type, and components, matching the menu / blind / shop / ante packs.</p>
+      </div>
+
+      <!-- ===================== PALETTE ===================== -->
+      <section>
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <h2 class="sec">Palette <small>Role-based — each color carries a fixed meaning across every screen.</small></h2>
+        <div class="rule"></div>
+        <div class="palette">
+          <div class="swatch"><div class="chip" style="background:var(--cyan)"><span></span><b>#00E5FF</b></div><div class="meta"><div class="nm" style="color:var(--cyan)">Cyan</div><div class="role">Chips · common · scoring</div></div></div>
+          <div class="swatch"><div class="chip" style="background:var(--pink)"><span></span><b>#FF2E97</b></div><div class="meta"><div class="nm" style="color:var(--pink)">Pink</div><div class="role">Mult · rare · danger · selected</div></div></div>
+          <div class="swatch"><div class="chip" style="background:var(--violet)"><span></span><b>#B026FF</b></div><div class="meta"><div class="nm" style="color:var(--violet)">Violet</div><div class="role">Frame · borders · jokers · tags</div></div></div>
+          <div class="swatch"><div class="chip" style="background:var(--gold)"><span class="new">NEW</span><b>#FFC53D</b></div><div class="meta"><div class="nm" style="color:var(--gold)">Gold</div><div class="role">Money · cost · reward · legendary</div></div></div>
+          <div class="swatch"><div class="chip" style="background:var(--lime)"><span class="new">NEW</span><b>#8CFF5B</b></div><div class="meta"><div class="nm" style="color:var(--lime)">Lime</div><div class="role">Go · gains · affordable · uncommon</div></div></div>
+        </div>
+        <div class="legend">Surface <span class="sw" style="background:#0a0612"></span> #0A0612 · root <span class="sw" style="background:#050208"></span> #050208 · radial-glow backdrop with cyan grid + scanlines (this whole page sits on it).</div>
+      </section>
+
+      <!-- ===================== TYPE ===================== -->
+      <section>
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <h2 class="sec">Typography <small>Three families — display, body, and card/secondary.</small></h2>
+        <div class="rule"></div>
+        <div class="type">
+          <div class="spec"><div class="tag">Orbitron 700–900 · display — titles, scores, names, buttons</div><div class="ex-orbitron">MINI BALATRO · 50000</div></div>
+          <div class="spec"><div class="tag">Chakra Petch 500–700 · body — labels, effect text, UI copy</div><div class="ex-chakra">Score to beat · +8 Mult if hand has a Pair</div></div>
+          <div class="spec"><div class="tag">Rajdhani 500–700 · cards / secondary — pips & ranks</div><div class="ex-rajdhani">A♠ K♥ 10♦ 7♣ · reroll · continue</div></div>
+        </div>
+      </section>
+
+      <!-- ===================== COMPONENTS ===================== -->
+      <section>
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <h2 class="sec">Components <small>Clipped angular panels · corner brackets · scanlines · neon glow.</small></h2>
+        <div class="rule"></div>
+        <div class="gallery">
+          <div class="grp">
+            <span class="grplbl">Buttons</span>
+            <div class="row">
+              <button class="btn go">Buy</button>
+              <button class="btn play">Play ▸</button>
+              <button class="btn ghost">Deck</button>
+              <button class="btn gold">⟲ Reroll $5</button>
+            </div>
+          </div>
+
+          <div class="grp">
+            <span class="grplbl">Rarity tags</span>
+            <div class="row">
+              <span class="rtag common">Common</span>
+              <span class="rtag uncommon">Uncommon</span>
+              <span class="rtag rare">Rare</span>
+              <span class="rtag legendary">Legendary</span>
+            </div>
+          </div>
+
+          <div class="grp">
+            <span class="grplbl">Playing cards</span>
+            <div class="row">
+              <div class="pc black"><span class="r">A<br>♠</span><span class="p">♠</span><span class="r b">A<br>♠</span></div>
+              <div class="pc red"><span class="r">K<br>♥</span><span class="p">♥</span><span class="r b">K<br>♥</span></div>
+              <div class="pc black sel"><span class="r">7<br>♣</span><span class="p">♣</span><span class="r b">7<br>♣</span></div>
+              <div class="pc red score"><span class="r">10<br>♦</span><span class="p">♦</span><span class="r b">10<br>♦</span></div>
+            </div>
+            <div class="legend" style="margin:2px 0 0">cyan = black suit · pink = red suit · <span style="color:var(--lime)">lime lift = selected</span> · <span style="color:var(--pink)">pink lift = scoring</span></div>
+          </div>
+
+          <div class="grp">
+            <span class="grplbl">Jokers <span style="color:#ffffff55">· slim chip · hover / tap → details + sell</span></span>
+            <div class="row" style="padding-bottom:54px">
+              <span class="jchip"><span class="sell">$1</span><span class="nm">JOLLY</span>
+                <span class="jpop"><span class="jn">Jolly Joker</span><span class="je">+8 Mult if your played hand contains a Pair.</span><span class="jrow"><span class="jtag">common</span><button class="jsell">Sell $1</button></span></span></span>
+              <span class="jchip active"><span class="sell">$2</span><span class="nm">MAD</span>
+                <span class="jpop"><span class="jn">Mad Joker</span><span class="je">+10 Mult if your played hand contains Two Pair.</span><span class="jrow"><span class="jtag">common</span><button class="jsell">Sell $2</button></span></span></span>
+              <span class="jchip empty">+</span>
+            </div>
+            <div class="legend" style="margin:2px 0 0">violet frame · hover/tap shows the popup (MAD shown open) · dashed = empty slot</div>
+          </div>
+
+          <div class="grp">
+            <span class="grplbl">Scoreboard</span>
+            <div class="row">
+              <div class="score">
+                <div class="chipbox"><span class="k">CHIPS</span><span class="v">30</span></div>
+                <span class="times">×</span>
+                <div class="multbox"><span class="k">MULT</span><span class="v">12</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grp">
+            <span class="grplbl">Panels &amp; tiles</span>
+            <div class="row">
+              <div class="panel lime"><span class="pk">Cash Out</span><div class="pv" style="color:var(--lime)">+$8</div></div>
+              <div class="panel gold"><span class="pk">Money</span><div class="pv" style="color:var(--gold)">$12</div></div>
+              <div class="panel pink"><span class="pk">Boss · Target</span><div class="pv" style="color:var(--pink)">600</div></div>
+              <div class="tile money"><span class="k">$</span><span class="v">12</span></div>
+              <div class="tile"><span class="k">DECK</span><span class="v">39</span></div>
+            </div>
+          </div>
+
+          <div class="grp">
+            <span class="grplbl">Quiet panel <span style="color:#ffffff55">· secondary / recessed (no glow)</span></span>
+            <div class="row">
+              <div class="qpanel"><span class="pk">Owned · Jokers</span><div class="pv">2 / 5</div></div>
+              <div class="qpanel"><span class="pk">Next</span><div class="pv">Big Blind</div></div>
+            </div>
+            <div class="legend" style="margin:2px 0 0">used for owned-jokers strip, context chips, inactive tabs — recedes so the focal element wins</div>
+          </div>
+
+          <div class="grp">
+            <span class="grplbl">Segmented tabs <span style="color:#ffffff55">· shop shelves / view switch</span></span>
+            <div class="row">
+              <div class="seg"><button class="on">Roll</button><button>Packs</button><button>Voucher</button></div>
+            </div>
+          </div>
+
+          <div class="grp">
+            <span class="grplbl">Bottom sheet <span style="color:#ffffff55">· tap-to-expand detail (progressive disclosure)</span></span>
+            <div class="row">
+              <div class="sheetdemo">
+                <div class="bg">shop shelf behind…</div>
+                <div class="scrim"></div>
+                <div class="sheet">
+                  <div class="grab"></div>
+                  <div class="snm">The Duo</div>
+                  <div class="srow"><span class="scost">$8</span><button class="sbuy">Buy ▸</button></div>
+                </div>
+              </div>
+            </div>
+            <div class="legend" style="margin:2px 0 0">resting cards stay minimal · full stats + Buy live in the sheet on tap</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="foot">Browse every screen in the viewer → <a href="packs.html">packs.html</a> · this is the style reference behind menu · blind · shop · ante.</div>
     </div>
-
-    <!-- THEME A -->
-    <section class="col a">
-      <h1 class="title">MINI BALATRO</h1>
-      <p class="tagline">Hit the score · climb the antes</p>
-      <div class="menu"><button class="btn primary">Play</button><button class="btn ghost">Settings</button></div>
-      <div class="cards">
-        <div class="card black"><span class="r">A</span><span class="s">♠</span><span class="r b">A</span></div>
-        <div class="card red"><span class="r">K</span><span class="s">♥</span><span class="r b">K</span></div>
-        <div class="card red"><span class="r">10</span><span class="s">♦</span><span class="r b">10</span></div>
-        <div class="card black"><span class="r">7</span><span class="s">♣</span><span class="r b">7</span></div>
-      </div>
-      <div class="panel">
-        <div class="eyebrow">Ante 1 / 8</div>
-        <div class="blindname">Small Blind</div>
-        <div class="pips"><i class="on"></i><i></i><i></i></div>
-        <div class="scorebox"><div class="eyebrow">Score to beat</div><div class="score">300</div><div class="reward">Reward $3 + $1/hand</div></div>
-        <button class="btn primary wide">Play Small Blind</button>
-      </div>
-      <div class="panel shop">
-        <div class="planet">Saturn</div>
-        <div class="planeteff">+30 chips · +3 mult</div>
-        <div class="lvl">Straight · Lv 1 → 2</div>
-        <div class="shoprow"><span class="cost">$3</span><button class="btn primary sm">Buy</button></div>
-      </div>
-      <div class="caption">
-        <b>A · "Neon Tube"</b> — title <b>Monoton</b> · body <b>Rajdhani</b>
-        <span class="swatches"><span class="sw" style="background:#FF2E97"></span><span class="sw" style="background:#B026FF"></span><span class="sw" style="background:#00E5FF"></span></span>
-        · #FF2E97 / #B026FF / #00E5FF on #0A0612
-      </div>
-    </section>
-
-    <!-- THEME B -->
-    <section class="col b">
-      <h1 class="title">MINI BALATRO</h1>
-      <p class="tagline">Hit the score · climb the antes</p>
-      <div class="menu"><button class="btn primary">Play</button><button class="btn ghost">Settings</button></div>
-      <div class="cards">
-        <div class="card black"><span class="r">A</span><span class="s">♠</span><span class="r b">A</span></div>
-        <div class="card red"><span class="r">K</span><span class="s">♥</span><span class="r b">K</span></div>
-        <div class="card red"><span class="r">10</span><span class="s">♦</span><span class="r b">10</span></div>
-        <div class="card black"><span class="r">7</span><span class="s">♣</span><span class="r b">7</span></div>
-      </div>
-      <div class="panel">
-        <div class="eyebrow">Ante 1 / 8</div>
-        <div class="blindname">Small Blind</div>
-        <div class="pips"><i class="on"></i><i></i><i></i></div>
-        <div class="scorebox"><div class="eyebrow">Score to beat</div><div class="score">300</div><div class="reward">Reward $3 + $1/hand</div></div>
-        <button class="btn primary wide">Play Small Blind</button>
-      </div>
-      <div class="panel shop">
-        <div class="planet">Saturn</div>
-        <div class="planeteff">+30 chips · +3 mult</div>
-        <div class="lvl">Straight · Lv 1 → 2</div>
-        <div class="shoprow"><span class="cost">$3</span><button class="btn primary sm">Buy</button></div>
-      </div>
-      <div class="caption">
-        <b>B · "Cyber Synth"</b> — title <b>Orbitron</b> · body <b>Chakra Petch</b>
-        <span class="swatches"><span class="sw" style="background:#FF1F8F"></span><span class="sw" style="background:#8B2FFF"></span><span class="sw" style="background:#2DE2FF"></span></span>
-        · #FF1F8F / #8B2FFF / #2DE2FF on #0B0118
-      </div>
-    </section>
-
-    <!-- THEME C -->
-    <section class="col c">
-      <h1 class="title">MINI BALATRO</h1>
-      <p class="tagline">Hit the score · climb the antes</p>
-      <div class="menu"><button class="btn primary">Play</button><button class="btn ghost">Settings</button></div>
-      <div class="cards">
-        <div class="card black"><span class="r">A</span><span class="s">♠</span><span class="r b">A</span></div>
-        <div class="card red"><span class="r">K</span><span class="s">♥</span><span class="r b">K</span></div>
-        <div class="card red"><span class="r">10</span><span class="s">♦</span><span class="r b">10</span></div>
-        <div class="card black"><span class="r">7</span><span class="s">♣</span><span class="r b">7</span></div>
-      </div>
-      <div class="panel">
-        <div class="eyebrow">Ante 1 / 8</div>
-        <div class="blindname">Small Blind</div>
-        <div class="pips"><i class="on"></i><i></i><i></i></div>
-        <div class="scorebox"><div class="eyebrow">Score to beat</div><div class="score">300</div><div class="reward">Reward $3 + $1/hand</div></div>
-        <button class="btn primary wide">Play Small Blind</button>
-      </div>
-      <div class="panel shop">
-        <div class="planet">Saturn</div>
-        <div class="planeteff">+30 chips · +3 mult</div>
-        <div class="lvl">Straight · Lv 1 → 2</div>
-        <div class="shoprow"><span class="cost">$3</span><button class="btn primary sm">Buy</button></div>
-      </div>
-      <div class="caption">
-        <b>C · "Vapor Zen"</b> — title <b>Zen Dots</b> · body <b>Michroma</b>
-        <span class="swatches"><span class="sw" style="background:#FF6AD5"></span><span class="sw" style="background:#C774E8"></span><span class="sw" style="background:#26C6DA"></span></span>
-        · #FF6AD5 / #C774E8 / #26C6DA on #1A0B2E
-      </div>
-    </section>
+    <script src="cyber.js"></script>
   </body>
 </html>

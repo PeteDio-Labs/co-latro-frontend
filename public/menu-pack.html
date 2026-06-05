@@ -10,107 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Chakra+Petch:wght@500;600;700&family=Rajdhani:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <style>
-      *{ box-sizing:border-box; margin:0; padding:0; }
-      :root{
-        --violet:#b026ff; --cyan:#00e5ff; --pink:#ff2e97;
-        --gold:#ffc53d;  /* NEW — money / cost / reward / legendary */
-        --lime:#8cff5b;  /* NEW — go / gains / resume / affordable */
-      }
-      body{ background:radial-gradient(circle at 50% -10%, #1a0723 0%, #0a0612 55%, #050208 100%); background-attachment:fixed;
-        color:#fff; font-family:'Chakra Petch', system-ui, sans-serif; min-height:100vh; padding-bottom:40px; }
-      .head{ text-align:center; padding:30px 16px 6px; }
-      .head h2{ font-family:'Rajdhani'; font-size:22px; font-weight:700; letter-spacing:.04em; color:#e9dcff; }
-      .head p{ opacity:.6; font-size:13px; margin-top:6px; }
-      .band{ padding:34px 16px 6px; border-top:1px solid #ffffff10; margin-top:26px; }
-      .caption{ font-family:ui-monospace, monospace; font-size:12px; color:#ffffffb0; text-align:center; max-width:1000px;
-        margin:14px auto 0; padding:10px 14px; border:1px dashed var(--violet); border-radius:10px; }
-      .caption b{ color:#fff; } .caption .sw{ display:inline-block; width:13px; height:13px; border-radius:3px; vertical-align:middle; margin:0 1px; }
-
-      /* ===== Cyber HUD chrome (shared with blind/shop packs) ===== */
-      .cyber{ width:100%; max-width:1000px; margin:0 auto; border-radius:14px; overflow:hidden; position:relative;
-        aspect-ratio:16/10; min-height:560px; background:#080611; box-shadow:inset 0 0 0 1px #00e5ff22, 0 0 40px rgba(0,229,255,.12);
-        display:flex; flex-direction:column; }
-      .cyber::before{ content:""; position:absolute; inset:0; pointer-events:none;
-        background:linear-gradient(rgba(0,229,255,.045) 1px, transparent 1px) 0 0/100% 34px,
-          linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px) 0 0/34px 100%,
-          repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 3px); }
-      .cyber::after{ content:""; position:absolute; inset:0; pointer-events:none;
-        background:radial-gradient(120% 80% at 50% -10%, rgba(176,38,255,.16), transparent 60%); }
-      .corner{ position:absolute; width:22px; height:22px; border:2px solid var(--cyan); opacity:.7; pointer-events:none; z-index:3; }
-      .corner.tl{ top:10px; left:10px; border-right:0; border-bottom:0; } .corner.tr{ top:10px; right:10px; border-left:0; border-bottom:0; }
-      .corner.bl{ bottom:10px; left:10px; border-right:0; border-top:0; } .corner.br{ bottom:10px; right:10px; border-left:0; border-top:0; }
-
-      /* top status strip */
-      .statusbar{ position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between;
-        padding:14px 22px; font-size:10px; letter-spacing:.26em; color:#7fdfff; text-transform:uppercase; border-bottom:1px solid #00e5ff1c; }
-      .statusbar .sys{ color:#ffffff70; }
-      .online{ display:inline-flex; align-items:center; gap:7px; color:var(--lime); }
-      .online i{ width:8px; height:8px; border-radius:50%; background:var(--lime); box-shadow:0 0 10px var(--lime); }
-
-      /* main grid: menu (left) + telemetry (right) */
-      .body{ position:relative; z-index:2; flex:1; display:grid; grid-template-columns:1.25fr .85fr; gap:26px; padding:26px 28px; align-items:center; }
-      .titleblock .kicker{ font-family:'Orbitron'; font-weight:700; font-size:11px; letter-spacing:.4em; color:var(--cyan); }
-      .titleblock h1{ font-family:'Orbitron'; font-weight:900; font-size:62px; line-height:.92; color:#fff; letter-spacing:.01em; margin:6px 0 4px;
-        text-shadow:-2px 0 var(--pink), 2px 0 var(--cyan), 0 0 30px rgba(0,229,255,.45); }
-      .titleblock .tag{ font-size:12px; letter-spacing:.22em; color:#ffffffa0; text-transform:uppercase; }
-      .titleblock .rule{ height:2px; width:140px; margin:14px 0 18px; background:linear-gradient(90deg, var(--pink), var(--cyan), transparent); }
-
-      .menu{ display:flex; flex-direction:column; gap:11px; max-width:380px; }
-      .mbtn{ position:relative; text-align:left; cursor:pointer; border:none; color:#fff; padding:13px 18px 13px 20px;
-        font-family:'Orbitron'; font-weight:700; font-size:15px; letter-spacing:.08em; text-transform:uppercase;
-        background:#ffffff08; border:1px solid #ffffff20; clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);
-        display:flex; align-items:center; gap:12px; }
-      .mbtn .arr{ color:var(--cyan); font-size:13px; }
-      .mbtn .sub{ display:block; font-family:'Chakra Petch'; font-weight:500; font-size:10px; letter-spacing:.12em; color:#ffffff80; margin-top:2px; }
-      .mbtn.resume{ background:linear-gradient(90deg, rgba(140,255,91,.18), rgba(140,255,91,.04)); border-color:var(--lime); box-shadow:0 0 16px rgba(140,255,91,.25); }
-      .mbtn.resume .arr{ color:var(--lime); }
-      .mbtn.play{ background:linear-gradient(90deg, rgba(255,46,151,.22), rgba(255,46,151,.05)); border-color:var(--pink); box-shadow:0 0 16px rgba(255,46,151,.3); }
-      .mbtn.play .arr{ color:var(--pink); }
-      .mbtn.ghost{ color:#cfe9ff; } .mbtn.ghost .arr{ color:var(--cyan); }
-      .mbtn .tail{ margin-left:auto; font-size:10px; letter-spacing:.18em; color:#ffffff55; }
-
-      /* right telemetry panel */
-      .telemetry{ display:flex; flex-direction:column; gap:14px; }
-      .panel{ background:#00e5ff08; border:1px solid #00e5ff2e; padding:14px 16px;
-        clip-path:polygon(0 0,100% 0,100% 100%,12px 100%,0 calc(100% - 12px)); }
-      .panel h3{ font-family:'Orbitron'; font-weight:700; font-size:10px; letter-spacing:.28em; color:#7fdfff; margin-bottom:10px; text-transform:uppercase; }
-      .stat{ display:flex; align-items:center; justify-content:space-between; padding:5px 0; border-bottom:1px dashed #ffffff14; font-size:12px; letter-spacing:.06em; }
-      .stat:last-child{ border-bottom:0; } .stat .l{ color:#ffffff90; text-transform:uppercase; font-size:10px; letter-spacing:.16em; }
-      .stat .v{ font-family:'Orbitron'; font-weight:800; font-size:15px; }
-      .stat .v.cyan{ color:var(--cyan); } .stat .v.gold{ color:var(--gold); } .stat .v.pink{ color:var(--pink); } .stat .v.lime{ color:var(--lime); }
-      /* decorative neon card fan */
-      .fan{ position:relative; height:120px; display:flex; align-items:center; justify-content:center; }
-      .fan .c{ position:absolute; width:74px; height:104px; border-radius:7px; background:linear-gradient(165deg,#0e1630,#070b1c);
-        display:flex; align-items:center; justify-content:center; font-family:'Rajdhani'; font-weight:700; font-size:30px;
-        box-shadow:0 8px 18px rgba(0,0,0,.5), inset 0 0 16px rgba(0,0,0,.6); }
-      .fan .c1{ transform:rotate(-16deg) translateX(-44px); border:1px solid var(--cyan); color:var(--cyan); }
-      .fan .c2{ transform:rotate(0deg) translateY(-6px); border:1px solid var(--gold); color:var(--gold); z-index:2; box-shadow:0 0 18px rgba(255,197,61,.35); }
-      .fan .c3{ transform:rotate(16deg) translateX(44px); border:1px solid var(--pink); color:var(--pink); }
-
-      /* operator footer */
-      .footer{ position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between;
-        padding:12px 22px; border-top:1px solid #00e5ff1c; font-size:11px; letter-spacing:.18em; text-transform:uppercase; }
-      .footer .op{ color:#ffffff90; } .footer .op b{ font-family:'Orbitron'; color:var(--cyan); font-weight:800; letter-spacing:.1em; }
-      .footer .so{ background:transparent; border:1px solid #ffffff2a; color:#ffffffb0; font-family:'Chakra Petch'; font-weight:600;
-        font-size:10px; letter-spacing:.16em; padding:6px 14px; cursor:pointer; clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%); text-transform:uppercase; }
-
-      /* ===== sign-in band ===== */
-      .signwrap{ position:relative; z-index:2; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px; }
-      .signwrap .glitch{ font-family:'Orbitron'; font-weight:900; font-size:48px; color:#fff; text-shadow:-2px 0 var(--pink), 2px 0 var(--cyan), 0 0 28px rgba(0,229,255,.45); }
-      .signcard{ width:100%; max-width:440px; background:#00e5ff08; border:1px solid #00e5ff33; padding:26px 26px 24px;
-        clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%); }
-      .signcard .lbl{ font-family:'Orbitron'; font-weight:700; font-size:11px; letter-spacing:.3em; color:#7fdfff; text-transform:uppercase; }
-      .signcard .field{ margin:12px 0 16px; display:flex; align-items:center; gap:10px; background:#00000055; border:1px solid #ffffff26; padding:12px 14px;
-        clip-path:polygon(8px 0,100% 0,100% 100%,0 100%,0 8px); }
-      .signcard .field .cur{ color:var(--cyan); font-family:'Orbitron'; font-weight:800; }
-      .signcard .field input{ flex:1; background:transparent; border:0; outline:0; color:#fff; font-family:'Orbitron'; font-weight:700; font-size:18px; letter-spacing:.06em; }
-      .signcard .field input::placeholder{ color:#ffffff44; }
-      .signbtn{ width:100%; background:var(--lime); color:#07210a; font-family:'Orbitron'; font-weight:800; font-size:14px; letter-spacing:.12em;
-        text-transform:uppercase; border:none; padding:13px; cursor:pointer; clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%); }
-      .signhint{ font-size:11px; letter-spacing:.14em; color:#ffffff80; text-transform:uppercase; }
-      .signhint b{ color:var(--gold); }
-    </style>
+    <link rel="stylesheet" href="cyber.css" />
   </head>
   <body>
     <div class="head">
@@ -126,7 +26,7 @@
           <span>Arcade Terminal <span class="sys">// boot ok</span></span>
           <span class="online"><i></i> Online · v0.4</span>
         </div>
-        <div class="body">
+        <div class="menu-body">
           <div class="titleblock">
             <div class="kicker">ROGUELIKE POKER</div>
             <h1>MINI<br />BALATRO</h1>

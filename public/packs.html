@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Co-latro — Design Packs Viewer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Chakra+Petch:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *{ box-sizing:border-box; margin:0; padding:0; }
+      :root{ --violet:#b026ff; --cyan:#00e5ff; --pink:#ff2e97; --gold:#ffc53d; --lime:#8cff5b; }
+      html,body{ height:100%; }
+      body{ background:radial-gradient(circle at 50% -10%, #1a0723 0%, #0a0612 55%, #050208 100%) fixed;
+        color:#fff; font-family:'Chakra Petch', system-ui, sans-serif; display:flex; flex-direction:column; min-height:100dvh; }
+
+      /* ---- top nav bar (Cyber HUD chrome) ---- */
+      .nav{ position:relative; z-index:2; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+        padding:12px 18px; border-bottom:1px solid #00e5ff1c; background:#080611cc; backdrop-filter:blur(4px); }
+      .brand{ display:flex; flex-direction:column; line-height:1; }
+      .brand b{ font-family:'Orbitron'; font-weight:900; font-size:15px; letter-spacing:.04em; color:#fff;
+        text-shadow:-1.5px 0 var(--pink), 1.5px 0 var(--cyan); }
+      .brand span{ font-size:9px; letter-spacing:.24em; color:#7fdfff; text-transform:uppercase; margin-top:3px; }
+
+      .tabs{ display:flex; gap:7px; flex-wrap:wrap; }
+      .tab{ font-family:'Orbitron'; font-weight:700; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+        padding:8px 14px; border:1px solid #ffffff22; background:#ffffff08; color:#cfe9ff; cursor:pointer;
+        clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%); transition:filter .15s, background .15s; }
+      .tab:hover{ filter:brightness(1.2); }
+      .tab .sub{ display:block; font-family:'Chakra Petch'; font-weight:500; font-size:8px; letter-spacing:.1em; color:#ffffff70; margin-top:2px; text-transform:none; }
+      .tab.on{ background:linear-gradient(90deg, rgba(140,255,91,.22), rgba(140,255,91,.05)); border-color:var(--lime); color:#fff; box-shadow:0 0 14px rgba(140,255,91,.3); }
+      .tab.on .sub{ color:#bfffb0; }
+
+      .arrows{ margin-left:auto; display:flex; align-items:center; gap:8px; }
+      .arrow{ font-family:'Orbitron'; font-weight:700; font-size:12px; letter-spacing:.06em; text-transform:uppercase;
+        padding:9px 16px; border:1px solid var(--cyan); background:rgba(0,229,255,.06); color:#cfe9ff; cursor:pointer;
+        clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%); transition:filter .15s; }
+      .arrow:hover{ filter:brightness(1.25); }
+      .counter{ font-family:'Orbitron'; font-weight:800; font-size:11px; letter-spacing:.1em; color:var(--gold); min-width:54px; text-align:center; }
+      .hint{ width:100%; font-family:ui-monospace, monospace; font-size:10px; letter-spacing:.06em; color:#ffffff70; }
+      .hint b{ color:var(--lime); }
+
+      /* ---- stage / iframe ---- */
+      .stage{ position:relative; flex:1; display:flex; }
+      .stage::before{ content:""; position:absolute; inset:0; pointer-events:none; z-index:1;
+        background:linear-gradient(rgba(0,229,255,.03) 1px, transparent 1px) 0 0/100% 38px,
+          linear-gradient(90deg, rgba(0,229,255,.025) 1px, transparent 1px) 0 0/38px 100%; }
+      .corner{ position:absolute; width:22px; height:22px; border:2px solid var(--cyan); opacity:.5; pointer-events:none; z-index:3; }
+      .corner.tl{ top:10px; left:10px; border-right:0; border-bottom:0; } .corner.tr{ top:10px; right:10px; border-left:0; border-bottom:0; }
+      .corner.bl{ bottom:10px; left:10px; border-right:0; border-top:0; } .corner.br{ bottom:10px; right:10px; border-left:0; border-top:0; }
+      iframe{ flex:1; width:100%; height:100%; border:0; background:#050208; }
+      .open{ position:absolute; bottom:14px; right:14px; z-index:3; font-family:'Chakra Petch'; font-weight:600; font-size:10px;
+        letter-spacing:.14em; text-transform:uppercase; color:#ffffffb0; text-decoration:none; padding:6px 12px;
+        border:1px solid #ffffff2a; background:#080611cc; clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%); }
+      .open:hover{ color:#fff; border-color:var(--cyan); }
+    </style>
+  </head>
+  <body>
+    <div class="nav">
+      <div class="brand"><b>CO-LATRO</b><span>Design Packs</span></div>
+      <div class="tabs" id="tabs"></div>
+      <div class="arrows">
+        <button class="arrow" id="prev">‹ Prev</button>
+        <span class="counter" id="counter">1 / 5</span>
+        <button class="arrow" id="next">Next ›</button>
+      </div>
+      <div class="hint"><b>←</b> / <b>→</b> flip packs · <b>↑</b> / <b>↓</b> scroll the design · tabs &amp; <b>‹ Prev / Next ›</b> too. One live server — <b>localhost:5173/packs.html</b>.</div>
+    </div>
+    <div class="stage">
+      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+      <iframe id="frame" title="design pack"></iframe>
+      <a class="open" id="open" href="#" target="_blank" rel="noopener">Open full ↗</a>
+    </div>
+
+    <script>
+      const PACKS = [
+        { file: "menu-pack.html",   label: "Menu",   sub: "menu · sign-in" },
+        { file: "blind-pack.html",  label: "Blind",  sub: "play screen" },
+        { file: "shop-pack.html",   label: "Shop",   sub: "full storefront" },
+        { file: "ante-pack.html",   label: "Ante",   sub: "blind / tag / pack / map" },
+        { file: "design-pack.html", label: "Design", sub: "style study" },
+      ];
+
+      const tabsEl = document.getElementById("tabs");
+      const frame  = document.getElementById("frame");
+      const counter= document.getElementById("counter");
+      const openEl = document.getElementById("open");
+      let idx = 0;
+
+      // build tabs
+      PACKS.forEach((p, i) => {
+        const b = document.createElement("button");
+        b.className = "tab";
+        b.innerHTML = p.label + '<span class="sub">' + p.sub + "</span>";
+        b.addEventListener("click", () => go(i));
+        tabsEl.appendChild(b);
+      });
+
+      function go(i) {
+        idx = (i + PACKS.length) % PACKS.length;
+        const p = PACKS[idx];
+        frame.src = p.file;
+        openEl.href = p.file;
+        counter.textContent = (idx + 1) + " / " + PACKS.length;
+        [...tabsEl.children].forEach((t, k) => t.classList.toggle("on", k === idx));
+        // reflect current pack in the URL hash so it survives reload / is shareable
+        if (location.hash.slice(1) !== p.file) history.replaceState(null, "", "#" + p.file);
+      }
+
+      document.getElementById("prev").addEventListener("click", () => go(idx - 1));
+      document.getElementById("next").addEventListener("click", () => go(idx + 1));
+      // scroll the currently-shown pack (inside the same-origin iframe)
+      function scrollFrame(dy) {
+        const win = frame.contentWindow;
+        if (win) win.scrollBy({ top: dy, behavior: "smooth" });
+      }
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft")  { go(idx - 1); }
+        else if (e.key === "ArrowRight") { go(idx + 1); }
+        else if (e.key === "ArrowUp")   { e.preventDefault(); scrollFrame(-Math.round(window.innerHeight * 0.85)); }
+        else if (e.key === "ArrowDown") { e.preventDefault(); scrollFrame( Math.round(window.innerHeight * 0.85)); }
+        else if (e.key === "PageUp")    { e.preventDefault(); scrollFrame(-Math.round(window.innerHeight * 0.95)); }
+        else if (e.key === "PageDown" || e.key === " ") { e.preventDefault(); scrollFrame(Math.round(window.innerHeight * 0.95)); }
+        else if (e.key === "Home")      { e.preventDefault(); frame.contentWindow?.scrollTo({ top: 0, behavior: "smooth" }); }
+        else if (e.key === "End")       { e.preventDefault(); const d = frame.contentDocument; if (d) frame.contentWindow.scrollTo({ top: d.body.scrollHeight, behavior: "smooth" }); }
+      });
+
+      // honor a #pack-file hash on load (e.g. packs.html#shop-pack.html), else start at the first
+      const start = PACKS.findIndex((p) => p.file === location.hash.slice(1));
+      go(start >= 0 ? start : 0);
+    </script>
+  </body>
+</html>
