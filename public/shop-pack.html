@@ -148,9 +148,9 @@
         </div>
         <div class="body">
           <div class="rail">
-            <button class="on">Roll ▸</button>
-            <button>Packs</button>
-            <button>Voucher</button>
+            <button class="on" data-shelf-tab="roll">Roll ▸</button>
+            <button data-shelf-tab="packs">Packs</button>
+            <button data-shelf-tab="voucher">Voucher</button>
             <div class="vmini voucher" style="margin:0;flex-direction:column;align-items:flex-start;gap:4px">
               <span class="idtag">PET-76</span>
               <div class="vk">VOUCHER</div><div class="vn">Overstock</div><div class="vd">+1 shop slot</div>
@@ -158,11 +158,34 @@
               <span class="vcost" style="margin:0">$10</span>
             </div>
           </div>
-          <div class="grid3">
+          <!-- ROLL shelf -->
+          <div class="grid3" data-shelf="roll">
             <div class="gcard rare focus"><span class="rtag">RARE</span><div class="gnm">The Duo</div><div class="geff">×2 Mult if hand has a Pair</div><div class="grow"><span class="gcost">$8</span><button class="gbuy">Buy</button></div></div>
             <div class="gcard planet"><span class="rtag">PLANET</span><div class="gnm">Saturn</div><div class="geff">+30 Chips · +3 Mult<br><span style="color:#ffffff70;font-size:9px">Straight · Lv 1 → 2</span></div><div class="grow"><span class="gcost">$3</span><button class="gbuy">Buy</button></div></div>
             <!-- PLACEHOLDER PET-70 -->
             <div class="gcard pack"><span class="rtag">BOOSTER</span><div class="gnm">Arcana Pack</div><div class="geff">Choose 1 of 3 Tarot<br><span style="color:#ffffff70;font-size:9px">Normal tier</span></div><div class="grow"><span class="gcost">$4</span><button class="gbuy">Buy</button></div></div>
+          </div>
+          <!-- PACKS shelf (PLACEHOLDER PET-70: 5 booster families) -->
+          <div class="grid3" data-shelf="packs" hidden>
+            <div class="gcard celestial"><span class="rtag">CELESTIAL</span><div class="gnm">Jumbo Celestial</div><div class="geff">Choose 1 of 4 Planets<br><span style="color:#ffffff70;font-size:9px">Jumbo tier</span></div><div class="grow"><span class="gcost">$6</span><button class="gbuy">Buy</button></div></div>
+            <div class="gcard pack"><span class="rtag">ARCANA</span><div class="gnm">Mega Arcana</div><div class="geff">Choose 1 of 5 Tarot<br><span style="color:#ffffff70;font-size:9px">Mega tier</span></div><div class="grow"><span class="gcost">$8</span><button class="gbuy">Buy</button></div></div>
+            <div class="gcard buffoon"><span class="rtag">BUFFOON</span><div class="gnm">Buffoon Pack</div><div class="geff">Choose 1 of 3 Jokers<br><span style="color:#ffffff70;font-size:9px">Normal tier</span></div><div class="grow"><span class="gcost">$4</span><button class="gbuy">Buy</button></div></div>
+            <div class="gcard spectral"><span class="rtag">SPECTRAL</span><div class="gnm">Spectral Pack</div><div class="geff">Choose 1 of 2 Spectral<br><span style="color:#ffffff70;font-size:9px">Normal tier</span></div><div class="grow"><span class="gcost">$6</span><button class="gbuy">Buy</button></div></div>
+            <div class="gcard standard"><span class="rtag">STANDARD</span><div class="gnm">Standard Pack</div><div class="geff">Choose 1 of 3 Playing cards<br><span style="color:#ffffff70;font-size:9px">Normal tier</span></div><div class="grow"><span class="gcost">$4</span><button class="gbuy">Buy</button></div></div>
+          </div>
+          <!-- VOUCHER shelf (PLACEHOLDER PET-76) -->
+          <div class="grid3" data-shelf="voucher" hidden style="grid-template-columns:1fr">
+            <div class="voucher" style="margin:0">
+              <span class="idtag">PET-76</span>
+              <div>
+                <div class="vk">VOUCHER · PERMANENT</div>
+                <div class="vn">Overstock</div>
+                <div class="vd">+1 shop slot for the rest of the run</div>
+                <div class="lock">// SURVIVES REROLL · one per shop · unlocks Overstock+</div>
+              </div>
+              <span class="vcost">$10</span>
+              <button class="vbuy">Buy</button>
+            </div>
           </div>
           <div class="detail">
             <span class="dtag">Rare</span>
