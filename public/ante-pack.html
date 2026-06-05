@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mini Balatro — Blind / Ante Flow · Design Pack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Monoton&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@600;700;800;900&family=Chakra+Petch:wght@500;600;700&family=Rubik+Mono+One&family=Zen+Dots&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="cyber.css" />
+  </head>
+  <body>
+    <div class="head">
+      <h2>Mini Balatro — Cyber HUD · Blind / Ante Flow</h2>
+      <p>Blind select, skip-for-tag, pack opening, and the 8-ante run map — design references (not wired). Pink = boss / danger.</p>
+      <div class="legend">
+        <span class="role"><span class="dot" style="background:var(--cyan);color:var(--cyan)"></span>Small / Chips</span>
+        <span class="role"><span class="dot" style="background:var(--lime);color:var(--lime)"></span><b>Big / current</b></span>
+        <span class="role"><span class="dot" style="background:var(--pink);color:var(--pink)"></span>Boss / danger</span>
+        <span class="role"><span class="dot" style="background:var(--gold);color:var(--gold)"></span>Money / Reward</span>
+        <span class="role"><span class="dot" style="background:var(--violet);color:var(--violet)"></span>Tag / Frame</span>
+      </div>
+    </div>
+
+    <!-- ============ SCREEN 1 · BLIND SELECT (redesigned) ============ -->
+    <!-- Mobile-first ordered path Small→Big→Boss; Big is the current hero. Neon reserved for
+         the hero card, the focal SCORE number, and the Play CTA. Everything else dimmed. -->
+    <div class="band">
+      <div class="bandlbl">▯ Mobile — primary frame (≈ 390px)</div>
+      <div class="cyber phone">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+
+        <!-- A · slim HUD — money the one bright value -->
+        <div class="bs-hud">
+          <span class="t">Blind Select <b>// choose your fight</b></span>
+          <span class="ante">Ante 1 / 8</span>
+          <span class="money"><span class="k">$</span><span class="v">12</span></span>
+        </div>
+
+        <!-- B · owned-jokers slim strip (quiet) -->
+        <div class="jokerstrip">
+          <span class="lbl">Jokers 2/5</span>
+          <span class="jchip"><span class="sell">$1</span><span class="nm">JOLLY</span>
+            <span class="jpop"><span class="jn">Jolly Joker</span><span class="je">+8 Mult if your played hand contains a Pair.</span><span class="jrow"><span class="jtag">common</span><button class="jsell">Sell $1</button></span></span></span>
+          <span class="jchip"><span class="sell">$2</span><span class="nm">MAD</span>
+            <span class="jpop"><span class="jn">Mad Joker</span><span class="je">+10 Mult if your played hand contains Two Pair.</span><span class="jrow"><span class="jtag">common</span><button class="jsell">Sell $2</button></span></span></span>
+          <span class="jchip empty">+</span><span class="jchip empty">+</span><span class="jchip empty">+</span>
+        </div>
+
+        <!-- C · ordered path — Small (cleared) → Big (hero) → Boss (locked) -->
+        <!-- REAL: Ante-1 medium targets 300/450/600; rewards $3/$4/$5 + $1/hand -->
+        <div class="path">
+          <span class="pathlbl">Ante 1 // small → big → boss</span>
+
+          <!-- SMALL = cleared/past: small dim node -->
+          <div class="node done">
+            <span class="pips"><i class="done"></i><i class="cur"></i><i></i></span>
+            <span class="chk">✓</span><span class="nn">SMALL · CLEARED</span>
+            <span class="meta"><s>300</s> · $3</span>
+          </div>
+          <div class="spine"></div>
+
+          <!-- BIG = current HERO: the one focal card. SCORE is the dominant number; mult demoted -->
+          <div class="hero">
+            <div class="htop">
+              <span class="pips"><i class="done"></i><i class="cur"></i><i></i></span>
+              <span class="hid">ANTE 1 · BIG BLIND<span class="mult">×1.5</span></span>
+            </div>
+            <span class="hk">Score to beat</span>
+            <div class="score">450</div>
+            <div class="reward">$4 reward <span class="sub">+ $1 / hand left</span></div>
+            <div class="rule">No special rule.</div>
+            <div class="cta">
+              <button class="play">Play Big Blind ▸</button>
+              <button class="skip">Skip →</button>
+              <!-- PLACEHOLDER PET-78: skip grants a Tag; shown inline so play-vs-skip is a visible trade-off -->
+              <span class="tagrew"><span class="star">★</span> CHARM TAG · free Mega Arcana</span>
+            </div>
+          </div>
+          <div class="spine"></div>
+
+          <!-- BOSS = upcoming / mandatory / ominous (heavier than small, quieter than hero) -->
+          <div class="node boss">
+            <div class="brow">
+              <span class="warn">⚠</span><span class="lock">🔒 NO SKIP</span><span class="bn">BOSS BLIND</span>
+              <span class="btgt">600</span><span class="brew">$5</span>
+            </div>
+            <!-- PLACEHOLDER: boss special effects not in backend (engine only applies a 2× target) -->
+            <span class="beff"><b>The Hook</b> — discards 2 random cards each hand</span>
+            <span class="mand">// MANDATORY · cannot skip · next after Big</span>
+          </div>
+        </div>
+
+        <div class="bs-foot"><span class="chip"><b>4 hands</b> · 3 discards · medium</span></div>
+      </div>
+    </div>
+
+    <!-- ============ SCREEN 1 · DESKTOP VARIANT ============ -->
+    <div class="band">
+      <div class="bandlbl">▢ Desktop — path horizontal, hero enlarged center</div>
+      <div class="cyber bs-desk">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="bs-hud">
+          <span class="t">Blind Select <b>// choose your fight</b></span>
+          <span class="lbl" style="margin-left:18px;font-size:9px;letter-spacing:.16em;color:#ffffff70;text-transform:uppercase">Jokers 2/5</span>
+          <span class="jchip" style="margin-left:8px"><span class="sell">$1</span><span class="nm">JOLLY</span>
+            <span class="jpop"><span class="jn">Jolly Joker</span><span class="je">+8 Mult if hand has a Pair.</span><span class="jrow"><span class="jtag">common</span><button class="jsell">Sell $1</button></span></span></span>
+          <span class="jchip"><span class="sell">$2</span><span class="nm">MAD</span>
+            <span class="jpop"><span class="jn">Mad Joker</span><span class="je">+10 Mult if hand has Two Pair.</span><span class="jrow"><span class="jtag">common</span><button class="jsell">Sell $2</button></span></span></span>
+          <span class="ante">Ante 1 / 8</span>
+          <span class="money"><span class="k">$</span><span class="v">12</span></span>
+        </div>
+        <div class="deskpath">
+          <div class="node done">
+            <span class="pips"><i class="done"></i><i class="cur"></i><i></i></span>
+            <span class="chk">✓</span><span class="nn">SMALL</span><span class="meta"><s>300</s> · $3</span>
+          </div>
+          <span class="chev">▸</span>
+          <div class="hero">
+            <div class="htop"><span class="pips"><i class="done"></i><i class="cur"></i><i></i></span><span class="hid">ANTE 1 · BIG BLIND<span class="mult">×1.5</span></span></div>
+            <span class="hk">Score to beat</span>
+            <div class="score">450</div>
+            <div class="reward">$4 reward <span class="sub">+ $1 / hand left</span></div>
+            <div class="rule">No special rule.</div>
+            <div class="cta">
+              <button class="play">Play Big Blind ▸</button>
+              <button class="skip">Skip →</button>
+              <span class="tagrew"><span class="star">★</span> CHARM TAG · free Mega Arcana</span>
+            </div>
+          </div>
+          <span class="chev">▸</span>
+          <div class="node boss">
+            <div class="brow"><span class="warn">⚠</span><span class="lock">🔒 NO SKIP</span></div>
+            <span class="bn">BOSS BLIND</span>
+            <span class="btgt" style="margin:0">600</span><span class="brew" style="margin:0">$5 + $1/hand</span>
+            <span class="beff"><b>The Hook</b> — discards 2 random each hand</span>
+            <span class="mand">// MANDATORY</span>
+          </div>
+        </div>
+        <div class="bs-foot"><span class="chip"><b>4 hands</b> · 3 discards · medium</span></div>
+      </div>
+      <div class="caption"><b>Blind Select · “Cyber HUD” (redesigned)</b> — mobile-first ordered path Small→Big→Boss: Small cleared/dim · <b>Big = current hero</b> w/ <b>SCORE-TO-BEAT 450</b> the one dominant number (mult demoted), reward $4 secondary, lime Play CTA · inline Skip → ★ Charm Tag <i>(PET-78)</i> · Boss locked/mandatory, danger telegraphed in pink <i>(boss effect placeholder — engine only 2× target)</i> · jokers a quiet strip. Neon reserved for hero + score + Play.
+        <br><span class="sw" style="background:#ff2e97"></span><span class="sw" style="background:#b026ff"></span><span class="sw" style="background:#00e5ff"></span><span class="sw" style="background:#ffc53d"></span><span class="sw" style="background:#8cff5b"></span></div>
+    </div>
+
+    <!-- ============ SCREEN 2 · SKIP-FOR-TAG (PET-78) ============ -->
+    <!-- PLACEHOLDER PET-78: no skip/tag system in backend; continueRun always plays Small→Big→Boss. Tags invented. -->
+    <div class="band">
+      <div class="cyber">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="statusbar">
+          <span>Blind Select <span class="sys">// play or skip for a tag</span></span>
+          <span class="sbright">
+            <span class="heldtag"><span class="star">★</span> CHARM TAG</span>
+            <span>ANTE 1 / 8</span><span class="money">$12</span>
+          </span>
+        </div>
+        <div class="explain">Skipping a Small/Big blind forfeits its <b>$3–$4</b> reward and grants a <b>Tag</b> — a one-time bonus you redeem later. Boss blinds can’t be skipped.</div>
+        <div class="blinds">
+          <div class="blindtok small">
+            <div class="pips"><i class="on"></i><i></i><i></i></div>
+            <div class="bk">ANTE 1 · SMALL</div><div class="bn">SMALL BLIND</div>
+            <div class="bmult">×1</div>
+            <div class="tgt">SCORE TO BEAT<b>300</b></div>
+            <div class="rew">$3 + $1 / hand</div>
+            <div class="dual"><button class="btn play sm">Play</button><button class="btn skip sm">Skip → Tag ▸</button></div>
+          </div>
+          <div class="blindtok big">
+            <div class="pips"><i></i><i class="on"></i><i></i></div>
+            <div class="bk">ANTE 1 · BIG</div><div class="bn">BIG BLIND</div>
+            <div class="bmult">×1.5</div>
+            <div class="tgt">SCORE TO BEAT<b>450</b></div>
+            <div class="rew">$4 + $1 / hand</div>
+            <div class="dual"><button class="btn play sm">Play</button><button class="btn skip sm">Skip → Tag ▸</button></div>
+          </div>
+          <div class="blindtok boss">
+            <span class="danger">⚠</span>
+            <div class="pips"><i></i><i></i><i></i></div>
+            <div class="bk">ANTE 1 · BOSS</div><div class="bn">BOSS BLIND</div>
+            <div class="bmult">×2</div>
+            <div class="tgt">SCORE TO BEAT<b>600</b></div>
+            <div class="rew">$5 + $1 / hand</div>
+            <div class="noskip">NO SKIP — must be played</div>
+          </div>
+        </div>
+        <div class="trayrow"><span class="traylbl">Example Tags</span></div>
+        <div class="tagrow">
+          <div class="tag violet"><div class="tn"><span class="star">★</span> Charm Tag</div><div class="te">Opens a free Mega Arcana Pack</div></div>
+          <div class="tag gold"><div class="tn"><span class="star">★</span> Investment Tag</div><div class="te">+$15 after the next Boss is cleared</div></div>
+          <div class="tag pink"><div class="tn"><span class="star">★</span> Double Tag</div><div class="te">Copies the next Tag you earn</div></div>
+        </div>
+      </div>
+      <div class="caption"><b>Skip-for-Tag · “Cyber HUD”</b> <i>(PET-78 · placeholder)</i> — Play vs Skip on Small/Big (Boss = no skip) · skip forfeits the reward, grants a Tag · example tags + a held-tag HUD chip in the status strip
+        <br><span class="sw" style="background:#ff2e97"></span><span class="sw" style="background:#b026ff"></span><span class="sw" style="background:#00e5ff"></span><span class="sw" style="background:#ffc53d"></span><span class="sw" style="background:#8cff5b"></span></div>
+    </div>
+
+    <!-- ============ SCREEN 3 · PACK-OPENING OVERLAY (PET-70) ============ -->
+    <!-- PLACEHOLDER PET-70: no pack/tarot system in backend; pack family/count + tarot cards & effects invented -->
+    <div class="band">
+      <div class="cyber">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="statusbar">
+          <span>Shop <span class="sys">// opening booster pack</span></span>
+          <span class="sbright"><span>ANTE 1 / 8</span><span class="money">$4</span></span>
+        </div>
+        <div class="stagewrap">
+          <!-- dimmed shop behind -->
+          <div class="behind">
+            <div class="item"><div class="nm">The Duo</div><div style="font-size:10px;color:#cfe6ff">×2 Mult if Pair</div></div>
+            <div class="item"><div class="nm">Saturn</div><div style="font-size:10px;color:#cfe6ff">+30 Chips · +3 Mult</div></div>
+            <div class="item"><div class="nm">Mega Arcana</div><div style="font-size:10px;color:#cfe6ff">Choose 1 of 5</div></div>
+          </div>
+          <div class="dim"></div>
+          <div class="overlay">
+            <div class="ohdr"><span class="ofam">ARCANA</span><span class="otitle">MEGA ARCANA PACK</span></div>
+            <div class="opick">CHOOSE 1 OF 5</div>
+            <div class="fan">
+              <div class="pc"><span class="num">0</span><span class="icon">☼</span><span class="name">THE FOOL</span><span class="eff">Copies last Tarot / Planet used</span></div>
+              <div class="pc"><span class="num">I</span><span class="icon">✦</span><span class="name">THE MAGICIAN</span><span class="eff">Adds Lucky to 2 selected cards</span></div>
+              <div class="pc sel"><span class="num">III</span><span class="icon">♛</span><span class="name">THE EMPRESS</span><span class="eff">+Mult edition to 2 cards</span></div>
+              <div class="pc"><span class="num">XI</span><span class="icon">⚔</span><span class="name">STRENGTH</span><span class="eff">Increase rank of 2 cards by 1</span></div>
+              <div class="pc"><span class="num">XVI</span><span class="icon">⚡</span><span class="name">THE TOWER</span><span class="eff">Turns 1 card into Stone (chips only)</span></div>
+            </div>
+            <div class="footerrow" style="padding:4px 0 2px">
+              <button class="btn play">Take The Empress ▸</button>
+              <button class="btn ghost">Skip Pack</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="caption"><b>Pack Opening · “Cyber HUD”</b> <i>(PET-70 · placeholder)</i> — modal over a dimmed shop: Mega Arcana “Choose 1 of 5” · fan of 5 Tarot cards w/ effects · The Empress lime hover-lift · Take / Skip · violet Arcana accent
+        <br><span class="sw" style="background:#ff2e97"></span><span class="sw" style="background:#b026ff"></span><span class="sw" style="background:#00e5ff"></span><span class="sw" style="background:#ffc53d"></span><span class="sw" style="background:#8cff5b"></span></div>
+    </div>
+
+    <!-- ============ SCREEN 4 · RUN / ANTE OVERVIEW ============ -->
+    <div class="band">
+      <div class="cyber boss">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="statusbar">
+          <span>Run Map <span class="sys">// ante 1 of 8</span></span>
+          <span class="sbright"><span class="diffchip">MEDIUM</span><span class="money">$12</span></span>
+        </div>
+        <div class="mapbody">
+          <div class="ladder">
+            <div class="ladderlbl">ANTE LADDER // 8 ANTES · SMALL · BIG · BOSS</div>
+            <!-- REAL: boss target = ANTE_BASE[n] × 2 → 600 / 1600 / 4000 / 10000 / 22000 / 40000 / 70000 / 100000 -->
+            <div class="antes">
+              <div class="ante current"><div class="an">ANTE 1</div><div class="apips"><i class="done"></i><i class="cur"></i><i></i></div><div class="bosstgt">boss 600</div></div>
+              <div class="ante dim"><div class="an">ANTE 2</div><div class="apips"><i></i><i></i><i></i></div><div class="bosstgt">boss 1600</div></div>
+              <div class="ante dim"><div class="an">ANTE 3</div><div class="apips"><i></i><i></i><i></i></div><div class="bosstgt">boss 4000</div></div>
+              <div class="ante dim"><div class="an">ANTE 4</div><div class="apips"><i></i><i></i><i></i></div><div class="bosstgt">boss 10000</div></div>
+              <div class="ante dim2"><div class="an">ANTE 5</div><div class="apips"><i></i><i></i><i></i></div><div class="bosstgt">boss 22000</div></div>
+              <div class="ante dim2"><div class="an">ANTE 6</div><div class="apips"><i></i><i></i><i></i></div><div class="bosstgt">boss 40000</div></div>
+              <div class="ante dim3"><div class="an">ANTE 7</div><div class="apips"><i></i><i></i><i></i></div><div class="bosstgt">boss 70000</div></div>
+              <div class="ante dim3"><div class="an">ANTE 8</div><div class="apips"><i></i><i></i><i></i></div><div class="bosstgt">boss 100000</div></div>
+            </div>
+            <div class="panel jbuild">
+              <h3>Joker Build · 2 / 5 slots</h3>
+              <div class="row"><span class="nm">Jolly Joker</span><span class="ef">+8 Mult if hand has a Pair</span></div>
+              <div class="row"><span class="nm">Mad Joker</span><span class="ef">+10 Mult if hand has Two Pair</span></div>
+              <div class="row"><span class="slots">+ 3 empty</span><span class="ef">buy more in the shop</span></div>
+            </div>
+          </div>
+          <div class="mapcol">
+            <!-- PLACEHOLDER: boss effect text invented; backend has only a 2× multiplier -->
+            <div class="panel boss bosspreview">
+              <h3>Next Boss — Ante 1</h3>
+              <div class="bt">TARGET 600</div>
+              <div class="be"><b style="color:#ff8fc4">The Hook</b> — discards 2 random cards each hand</div>
+            </div>
+            <div class="panel">
+              <h3>Run Telemetry</h3>
+              <div class="stat"><span class="l">Best Ante</span><span class="v cyan">1 / 8</span></div>
+              <div class="stat"><span class="l">Win Streak</span><span class="v lime">3</span></div>
+              <div class="stat"><span class="l">Bank</span><span class="v gold">$12</span></div>
+              <div class="stat"><span class="l">Hands / Discards</span><span class="v lime">4 / 3</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="footerrow" style="padding:8px 0 16px">
+          <button class="btn cont">Continue ▸</button>
+        </div>
+      </div>
+      <div class="caption"><b>Run Overview · “Cyber HUD”</b> — 8-ante roadmap (cleared lime · current cyan ring · upcoming hollow), REAL boss ladder 600→100000 · upcoming-Boss preview + effect <i>(placeholder)</i> · 2/5-joker build · run telemetry (best-ante/streak placeholder)
+        <br><span class="sw" style="background:#ff2e97"></span><span class="sw" style="background:#b026ff"></span><span class="sw" style="background:#00e5ff"></span><span class="sw" style="background:#ffc53d"></span><span class="sw" style="background:#8cff5b"></span></div>
+    </div>
+
+    <script src="cyber.js"></script>
+  </body>
+</html>
