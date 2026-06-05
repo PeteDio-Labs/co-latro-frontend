@@ -68,7 +68,9 @@ body {
 .corner.bl{ bottom:9px; left:9px; border-right:0; border-top:0; } .corner.br{ bottom:9px; right:9px; border-left:0; border-top:0; }
 
 /* phone-shaped primary frame (mobile-first mockups) */
-.phone{ width:clamp(360px,100%,412px); margin:0 auto; border-radius:26px; min-height:720px; }
+.phone{ width:clamp(360px,100%,412px); margin:0 auto; border-radius:26px; }
+/* phone frame sizes to its content — don't inherit the 16/10 desktop aspect ratio */
+.cyber.phone, .stage.phone{ aspect-ratio:auto; min-height:0; }
 
 /* shared QUIET recipe — secondary chrome: no colored border, no glow */
 .quiet, .qpanel{ background:#ffffff04; border:1px solid #ffffff14; box-shadow:none; }
@@ -80,12 +82,12 @@ body {
    UNIFIED JOKER — one slim chip used everywhere (.jchip).
    Click/tap or hover reveals a popup with details + Sell (see cyber.js).
    ===================================================================== */
-.jokerstrip{ display:flex; align-items:center; gap:7px; padding:9px 16px 6px; flex-wrap:wrap; }
-.jokerstrip .lbl{ font-size:9px; letter-spacing:.18em; color:#ffffff70; text-transform:uppercase; }
-.jchip{ position:relative; width:64px; height:28px; padding:4px 7px; display:flex; align-items:center;
+.jokerstrip{ display:flex; align-items:center; gap:6px; padding:9px 16px 6px; flex-wrap:nowrap; }
+.jokerstrip .lbl{ flex:0 0 auto; font-size:9px; letter-spacing:.18em; color:#ffffff70; text-transform:uppercase; }
+.jchip{ position:relative; flex:1 1 0; min-width:0; height:28px; padding:4px 7px; display:flex; align-items:center;
   background:#ffffff05; border:1px solid #ffffff1a; cursor:pointer;
   clip-path:polygon(0 0,100% 0,100% 100%,6px 100%,0 calc(100% - 6px)); transition:border-color .15s, box-shadow .15s; }
-.jchip .nm{ font-family:'Orbitron'; font-weight:700; font-size:9px; color:#e9dcff; }
+.jchip .nm{ font-family:'Orbitron'; font-weight:700; font-size:9px; color:#e9dcff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .jchip .sell{ position:absolute; top:2px; right:4px; font-size:7px; color:var(--gold); }
 .jchip.empty{ border-style:dashed; border-color:#ffffff20; color:#ffffff35; justify-content:center; font-size:11px; cursor:default; }
 .jchip:hover, .jchip.active{ border-color:var(--violet); box-shadow:0 0 12px rgba(176,38,255,.35); }
@@ -273,13 +275,13 @@ body {
 /* =====================================================================
    BLIND SELECT (ante-pack Screen 1) — slim HUD, path, hero, boss node
    ===================================================================== */
-.bs-hud{ display:flex; align-items:center; gap:10px; padding:13px 16px; border-bottom:1px solid #00e5ff18; }
+.bs-hud{ display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid #00e5ff18; }
 .bs-hud .t{ font-size:10px; letter-spacing:.16em; color:#ffffff70; text-transform:uppercase; } .bs-hud .t b{ color:#cfe9ff; }
 .bs-hud .ante{ margin-left:auto; font-size:10px; letter-spacing:.16em; color:#ffffff80; text-transform:uppercase; }
 .bs-hud .money{ display:flex; align-items:baseline; gap:3px; }
 .bs-hud .money .k{ font-size:8px; letter-spacing:.2em; color:#ffe39a; } .bs-hud .money .v{ font-family:'Orbitron'; font-weight:900; font-size:19px; color:var(--gold); text-shadow:0 0 12px rgba(255,197,61,.5); }
 
-.path{ flex:1; display:flex; flex-direction:column; gap:9px; padding:14px 16px 4px; }
+.path{ flex:1; display:flex; flex-direction:column; gap:8px; padding:11px 16px 4px; }
 .pathlbl{ font-family:'Orbitron'; font-weight:700; font-size:9px; letter-spacing:.26em; color:#7fdfff; text-transform:uppercase; }
 .spine{ height:14px; width:2px; background:#ffffff18; margin:-4px 0 -4px 26px; }
 .node{ display:flex; align-items:center; gap:11px; padding:9px 13px; background:#ffffff04; border:1px solid #ffffff14;
@@ -340,7 +342,8 @@ body {
 .dir2 .bar{ height:5px; margin-top:5px; background:#ffffff12; position:relative; }
 .dir2 .bar i{ position:absolute; inset:0 64% 0 0; background:linear-gradient(90deg,var(--cyan),var(--lime)); box-shadow:0 0 10px var(--cyan); }
 .dir2 .stats{ display:flex; gap:6px; }
-.dir2 .jokers{ display:flex; gap:8px; padding:8px 18px; flex-wrap:wrap; align-items:center; }
+.dir2 .jokers{ display:flex; gap:6px; padding:8px 18px; flex-wrap:nowrap; align-items:center; }
+.dir2 .jokers .jchip{ flex:1 1 0; min-width:0; }
 .dir2 .play{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:12px; padding-bottom:10px; }
 .dir2 .handname{ font-family:'Orbitron'; font-weight:800; font-size:16px; letter-spacing:.08em; color:#fff; }
 .dir2 .handname small{ font-family:'Chakra Petch'; color:var(--lime); font-size:11px; margin-left:8px; letter-spacing:.14em; }
@@ -411,8 +414,8 @@ h2.sec small{ display:block; font-family:'Chakra Petch'; font-weight:500; font-s
 .diffchip{ padding:5px 10px; border:1px solid #ffffff2a; color:#ffffffb0; font-size:9px; letter-spacing:.2em; }
 
 /* owned-jokers slim strip (Screen 1) — alias of .jokerstrip */
-.bs-jokers{ display:flex; align-items:center; gap:7px; padding:9px 16px 4px; flex-wrap:wrap; }
-.bs-jokers .lbl{ font-size:9px; letter-spacing:.18em; color:#ffffff70; text-transform:uppercase; }
+.bs-jokers{ display:flex; align-items:center; gap:6px; padding:9px 16px 4px; flex-wrap:nowrap; }
+.bs-jokers .lbl{ flex:0 0 auto; font-size:9px; letter-spacing:.18em; color:#ffffff70; text-transform:uppercase; }
 
 /* legacy joker tray glyph (kept for any pack still using .jk) */
 .trayrow{ display:flex; gap:9px; align-items:center; justify-content:center; padding:8px 20px 4px; }
