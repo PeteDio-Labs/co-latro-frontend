@@ -48,6 +48,9 @@ const HAND_NAME: Record<HandType, string> = {
   four_of_a_kind: "Four of a Kind",
   straight_flush: "Straight Flush",
   royal_flush: "Royal Flush",
+  five_of_a_kind: "Five of a Kind",
+  flush_house: "Flush House",
+  flush_five: "Flush Five",
 };
 
 /** Transient play-resolution animation state (built + stepped in main.ts). */
@@ -674,9 +677,14 @@ export function renderShop(run: RunStateDTO): string {
       : `Ante ${run.ante + 1} · Small Blind`;
   const voucherSlot = shop?.voucher ? renderShopVoucherSlot(shop.voucher, run.money) : "";
   // Slim shop HUD mirroring shop-pack.html .hud: "ANTE X/Y · NEXT <BLIND>" · Cashed-out chip · bright money on the right.
+  // The breakdown (base + $1/hand + interest) is surfaced as a hover title when the backend sends it.
+  const bd = run.pendingRewardBreakdown;
+  const cashedTitle = bd
+    ? ` title="Blind $${bd.blindBase} + hands $${bd.handsBonus} + interest $${bd.interest}"`
+    : "";
   const cashedChip =
     (run.pendingReward ?? 0) > 0
-      ? `<span class="cy-shop-hud__cashed">Cashed out +$${run.pendingReward}</span>`
+      ? `<span class="cy-shop-hud__cashed"${cashedTitle}>Cashed out +$${run.pendingReward}</span>`
       : "";
   return `
   <div class="${SCREEN} gap-4 p-3 sm:p-4 md:p-6">
