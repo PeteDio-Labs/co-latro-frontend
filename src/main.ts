@@ -2,6 +2,7 @@
 
 import "./styles.css";
 import * as api from "./api.ts";
+import { setManualRetryHandler, subscribeNet, type NetStatus } from "./net.ts";
 import { showToast } from "./toast.ts";
 import {
   renderBlindSelect,
@@ -718,6 +719,42 @@ document.addEventListener("keydown", (event) => {
     event.preventDefault();
     cancelPendingConsumable();
   }
+});
+
+// ---- network resilience (PET-62) -----------------------------------------
+
+/** Force a reconciliation fetch — backend is authoritative. Called when net flips back
+ *  to "online" after a drop, and when the user taps the offline banner to retry. */
+async function reconcileFromServer(): Promise<void> {
+  if (!state.token) return;
+  try {
+    state.run = (await api.activeRun(state.token)).run;
+    render();
+  } catch {
+    // request() already drove the net-status banner; nothing else to do here.
+  }
+}
+
+let lastNetStatus: NetStatus = "online";
+subscribeNet((next) => {
+  const prev = lastNetStatus;
+  lastNetStatus = next;
+  if (next === "retrying" && prev === "online") {
+    showToast("Connection lost — retrying…", "info");
+  } else if (next === "offline") {
+    showToast("Offline. Tap the banner to retry.", "error");
+  } else if (next === "online" && prev !== "online") {
+    // Recovered from a drop — reconcile to the server (backend stays authoritative).
+    showToast("Back online", "success");
+    void reconcileFromServer();
+  }
+});
+
+setManualRetryHandler(() => {
+  // User tapped the offline banner — try a recovery fetch now. request() will flip
+  // status to "retrying" while in flight and to "online" on success (which fires the
+  // subscribeNet handler above and re-renders).
+  void reconcileFromServer();
 });
 
 void boot();
