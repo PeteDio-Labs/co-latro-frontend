@@ -33,6 +33,8 @@ bun run typecheck
   handling and PWA metas (`viewport-fit=cover`, standalone) so **Add to Home Screen** runs full-screen and
   chrome-less.
 - **No deck leakage** — the client only knows what the server's DTO exposes.
+- **Service worker** — `public/sw.js` precaches the app shell + cache-firsts hashed `/assets/*` for
+  fast loads and an offline shell; gameplay stays online via `/api/*` passthrough (never intercepted).
 
 ## Layout
 

@@ -2,6 +2,7 @@
 
 import "./styles.css";
 import * as api from "./api.ts";
+import { registerServiceWorker } from "./sw-register.ts";
 import { showToast } from "./toast.ts";
 import {
   renderBlindSelect,
@@ -719,5 +720,8 @@ document.addEventListener("keydown", (event) => {
     cancelPendingConsumable();
   }
 });
+
+// PWA: register the service worker on production-like origins (skips the Vite dev server). (PET-63)
+registerServiceWorker();
 
 void boot();
