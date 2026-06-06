@@ -403,6 +403,35 @@ async function sellJokerAction(jokerId: string): Promise<void> {
   }
 }
 
+// ---- consumables / skip (PET-67 scaffold) ----
+
+async function useConsumableAction(instanceId: string): Promise<void> {
+  if (!state.token || state.anim) return;
+  try {
+    setRun(await api.useConsumable(state.token, instanceId, [...state.selected]));
+  } catch (err) {
+    showToast((err as Error).message, "error");
+  }
+}
+
+async function sellConsumableAction(instanceId: string): Promise<void> {
+  if (!state.token || state.anim) return;
+  try {
+    setRun(await api.sellConsumable(state.token, instanceId));
+  } catch (err) {
+    showToast((err as Error).message, "error");
+  }
+}
+
+async function skipBlindAction(): Promise<void> {
+  if (!state.token || state.anim) return;
+  try {
+    setRun(await api.skipBlind(state.token));
+  } catch (err) {
+    showToast((err as Error).message, "error");
+  }
+}
+
 async function moveJokerAction(jokerId: string, dir: "left" | "right"): Promise<void> {
   if (!state.token || state.anim) return;
   try {
@@ -480,6 +509,9 @@ const ASYNC_ACTIONS = new Set([
   "continue",
   "sell-joker",
   "new-run",
+  "use-consumable",
+  "sell-consumable",
+  "skip-blind",
 ]);
 
 /** Marks a button as in-flight (disabled + spinner) for the duration of an async handler.
@@ -533,6 +565,9 @@ app.addEventListener("click", (event) => {
     case "sell-joker": if (el.dataset.jokerId) { const id = el.dataset.jokerId; guard(() => sellJokerAction(id)); } break;
     case "move-joker-left": if (el.dataset.jokerId) void moveJokerAction(el.dataset.jokerId, "left"); break;
     case "move-joker-right": if (el.dataset.jokerId) void moveJokerAction(el.dataset.jokerId, "right"); break;
+    case "use-consumable": if (el.dataset.instanceId) { const id = el.dataset.instanceId; guard(() => useConsumableAction(id)); } break;
+    case "sell-consumable": if (el.dataset.instanceId) { const id = el.dataset.instanceId; guard(() => sellConsumableAction(id)); } break;
+    case "skip-blind": guard(skipBlindAction); break;
     case "confirm-new-run": guard(() => { confirmNewRun(); }); break;
     case "cancel-new-run": cancelNewRun(); break;
     case "open-detail": if (el.dataset.detailId) openDetail(el.dataset.detailId); break;

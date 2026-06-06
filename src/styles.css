@@ -455,3 +455,116 @@ body::before {
   .cy-fan { display: none; }
   .cy-title { font-size: clamp(1.6rem, 6vw, 2.6rem); }
 }
+
+/* =====================================================================
+   Foundation (PET-67) — slot containers + modifier badge placeholders
+   ---------------------------------------------------------------------
+   Catalogs are empty at this PR; content streams (PET-71/74/75/76/78/83)
+   fill them in. The empty-state rules below keep the layout from
+   shifting when there's nothing to show.
+   ===================================================================== */
+
+/* vouchers / tags rails — collapse to zero when empty so the layout doesn't shift */
+.cy-vouchers, .cy-tags, .cy-consumables { min-height: 0; }
+.cy-vouchers--empty, .cy-tags--empty, .cy-consumables--empty { display: none; }
+
+.cy-voucher, .cy-tag-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  background: rgba(255, 197, 61, 0.08);
+  border: 1px solid rgba(255, 197, 61, 0.5);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%);
+  font-size: clamp(10px, 2.4vw, 12px);
+  color: var(--color-neon-gold);
+  cursor: pointer;
+}
+.cy-tag-pill {
+  background: rgba(0, 229, 255, 0.08);
+  border-color: rgba(0, 229, 255, 0.5);
+  color: var(--color-neon-cyan);
+}
+.cy-voucher__icon, .cy-tag-pill__icon { font-family: "Orbitron", sans-serif; font-weight: 800; }
+.cy-voucher__name, .cy-tag-pill__name { font-family: "Chakra Petch", sans-serif; font-weight: 600; letter-spacing: 0.04em; }
+
+/* consumables row — same clipped corner as the joker slots */
+.cy-consumable {
+  display: flex; flex-direction: column; align-items: flex-start;
+  min-height: 3.5rem;
+  width: 5rem;
+  padding: 6px 8px;
+  background: rgba(176, 38, 255, 0.06);
+  border: 1px solid rgba(176, 38, 255, 0.5);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  cursor: pointer;
+}
+@media (min-width: 640px) { .cy-consumable { width: 6rem; } }
+.cy-consumable__kind {
+  font-family: "Orbitron", sans-serif; font-weight: 700;
+  font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--color-neon-violet);
+}
+.cy-consumable__name {
+  font-family: "Chakra Petch", sans-serif; font-weight: 700;
+  font-size: 10px; line-height: 1.15;
+  color: #fff;
+  margin-top: 2px;
+}
+.cy-consumable-slot { min-height: 3.5rem; }
+
+/* boss-effect warning banner — danger-tinted, clipped, neon pink border */
+.cy-boss-warning {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 8px 14px;
+  background: rgba(255, 46, 151, 0.12);
+  border: 1px solid var(--color-neon-pink);
+  box-shadow: 0 0 16px rgba(255, 46, 151, 0.3);
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  color: #ffd9ec;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: clamp(11px, 2.6vw, 13px);
+}
+.cy-boss-warning__icon {
+  font-family: "Orbitron", sans-serif; font-weight: 900;
+  color: var(--color-neon-pink);
+  text-shadow: 0 0 6px var(--color-neon-pink);
+}
+.cy-boss-warning__title {
+  font-family: "Orbitron", sans-serif; font-weight: 800;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: #fff;
+}
+.cy-boss-warning__body { color: #ffd9ec; }
+
+/* modifier badge slot placeholders — declared empty here (PET-67); content
+   streams (PET-75) attach the actual visuals. Hosts must be .cy-card; the
+   .card-mods wrapper sits above the rank/pip overlay via z-index. */
+.card-mods {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.card-mods > span { display: block; }
+
+/* enhancement badge slots */
+.card-enh-bonus,
+.card-enh-mult,
+.card-enh-wild,
+.card-enh-glass,
+.card-enh-steel,
+.card-enh-stone,
+.card-enh-gold,
+.card-enh-lucky { /* intentionally empty — PET-75 fills these in */ }
+
+/* edition badge slots (shimmer aliases via .card-foil/.card-holo/.card-poly
+   are already applied to the host .cy-card by renderCard) */
+.card-ed-foil,
+.card-ed-holo,
+.card-ed-poly,
+.card-ed-negative { /* intentionally empty — PET-75 fills these in */ }
+
+/* seal badge slots */
+.card-seal-red,
+.card-seal-blue,
+.card-seal-gold,
+.card-seal-purple { /* intentionally empty — PET-75 fills these in */ }

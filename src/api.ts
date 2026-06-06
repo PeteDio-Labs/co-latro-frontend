@@ -83,3 +83,22 @@ export const sellJoker = (token: string, jokerId: string) =>
 
 export const reorderJoker = (token: string, jokerId: string, dir: "left" | "right") =>
   request<RunStateDTO>("/api/run/reorder", { method: "POST", token, body: { jokerId, dir } });
+
+// ---- foundation (PET-67) — wrappers for endpoints content streams will populate ----
+
+export const useConsumable = (token: string, instanceId: string, selectedCardIds?: string[]) =>
+  request<RunStateDTO>("/api/run/consumable/use", {
+    method: "POST",
+    token,
+    body: { instanceId, selectedCardIds: selectedCardIds ?? [] },
+  });
+
+export const sellConsumable = (token: string, instanceId: string) =>
+  request<RunStateDTO>("/api/run/consumable/sell", {
+    method: "POST",
+    token,
+    body: { instanceId },
+  });
+
+export const skipBlind = (token: string) =>
+  request<RunStateDTO>("/api/run/skip", { method: "POST", token });

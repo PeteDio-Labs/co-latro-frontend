@@ -2,7 +2,9 @@
 
 import type {
   BlindKind,
+  BossEffect,
   Card,
+  Consumable,
   DeckPeekDTO,
   DeckSummary,
   HandLevels,
@@ -14,7 +16,10 @@ import type {
   ScoreBreakdown,
   ShopItem,
   Suit,
+  Tag,
   User,
+  Voucher,
+  VoucherShopItem,
 } from "./types.ts";
 
 const RANK_LABEL: Record<Rank, string> = {
@@ -224,9 +229,18 @@ function difficultyButton(value: string, label: string, detail: string): string 
 export function renderBlindSelect(run: RunStateDTO): string {
   const boss = run.blindKind === "boss";
   const bossTag = boss ? `<div class="cy-tag cy-tag--rare">⚠ Boss Blind</div>` : "";
+  // Skip is available on small/big blinds (PET-67 scaffold; backend may 400 until PET-78).
+  const canSkip = run.blindKind === "small" || run.blindKind === "big";
+  const skipBtn = canSkip
+    ? `<button data-action="skip-blind" class="cy-btn cy-btn--ghost !text-base px-10">Skip ▸</button>`
+    : "";
   return `
   <div class="${SCREEN} gap-4 p-3 sm:p-4 md:p-6 ${boss ? "cy-boss" : ""}">
     ${topBar(run)}
+    ${renderVouchersRail(run.vouchers)}
+    ${renderTagsRail(run.tags)}
+    ${renderConsumablesRow(run.consumables, run.maxConsumables)}
+    ${renderBossWarning(run.bossEffect)}
     ${renderJokers(run.jokers, run.maxJokers, true)}
     <div class="flex flex-1 flex-col items-center justify-center gap-5">
       <div class="text-center">
@@ -240,9 +254,71 @@ export function renderBlindSelect(run: RunStateDTO): string {
         <div class="font-display text-4xl font-black text-neon-cyan neon-cyan-text sm:text-5xl">${run.target}</div>
         <div class="mt-1 text-xs text-white/70">Reward $${BLIND_REWARD[run.blindKind]} + $1 / hand left</div>
       </div>
-      <button data-action="start-blind" class="cy-btn cy-btn--play !text-base px-10">Play ${BLIND_LABEL[run.blindKind]} ▸</button>
+      <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+        <button data-action="start-blind" class="cy-btn cy-btn--play !text-base px-10">Play ${BLIND_LABEL[run.blindKind]} ▸</button>
+        ${skipBtn}
+      </div>
       <div class="text-sm text-white/60">Money: <span class="font-display text-neon-gold">$${run.money}</span></div>
     </div>
+  </div>`;
+}
+
+// ---- foundation slot containers (PET-67) ----------------------------------
+
+/** Owned vouchers — empty when no vouchers, content streams (PET-76) populate. */
+function renderVouchersRail(vouchers: Voucher[]): string {
+  if (vouchers.length === 0) return `<div class="cy-vouchers cy-vouchers--empty" aria-hidden="true"></div>`;
+  const items = vouchers
+    .map(
+      (v) => `<div class="cy-voucher" data-action="open-detail" data-detail-id="voucher:${v.id}" tabindex="0" title="${escapeHtml(v.description)}">
+        <span class="cy-voucher__icon" aria-hidden="true">◆</span>
+        <span class="cy-voucher__name">${escapeHtml(v.name)}</span>
+      </div>`,
+    )
+    .join("");
+  return `<div class="cy-vouchers flex flex-wrap items-center justify-center gap-1.5">${items}</div>`;
+}
+
+/** Carried skip-blind tags — empty when no tags, content streams (PET-78) populate. */
+function renderTagsRail(tags: Tag[]): string {
+  if (tags.length === 0) return `<div class="cy-tags cy-tags--empty" aria-hidden="true"></div>`;
+  const items = tags
+    .map(
+      (t) => `<div class="cy-tag-pill" data-action="open-detail" data-detail-id="tag:${t.id}" tabindex="0" title="${escapeHtml(t.description)}">
+        <span class="cy-tag-pill__icon" aria-hidden="true">▣</span>
+        <span class="cy-tag-pill__name">${escapeHtml(t.name)}</span>
+      </div>`,
+    )
+    .join("");
+  return `<div class="cy-tags flex flex-wrap items-center justify-center gap-1.5">${items}</div>`;
+}
+
+/** Owned consumables row (tarot/planet/spectral) — empty slot placeholders + owned items. */
+function renderConsumablesRow(consumables: Consumable[], maxConsumables: number): string {
+  const slotCount = Math.max(maxConsumables, consumables.length);
+  if (slotCount === 0) return `<div class="cy-consumables cy-consumables--empty" aria-hidden="true"></div>`;
+  const slots: string[] = [];
+  for (let i = 0; i < slotCount; i++) {
+    const c = consumables[i];
+    slots.push(
+      c
+        ? `<div class="cy-consumable" data-action="open-detail" data-detail-id="consumable:${c.id}" tabindex="0" title="${escapeHtml(c.description)}">
+            <span class="cy-consumable__kind">${c.kind}</span>
+            <span class="cy-consumable__name">${escapeHtml(c.name)}</span>
+          </div>`
+        : `<div class="cy-slot cy-consumable-slot min-h-[3.5rem] w-20 shrink-0 sm:w-24">slot</div>`,
+    );
+  }
+  return `<div class="cy-consumables flex flex-wrap items-stretch justify-center gap-1.5 sm:gap-2">${slots.join("")}</div>`;
+}
+
+/** Boss-effect danger banner — only renders when a boss effect is active. */
+function renderBossWarning(bossEffect: BossEffect | null): string {
+  if (!bossEffect) return "";
+  return `<div class="cy-boss-warning" role="status">
+    <span class="cy-boss-warning__icon" aria-hidden="true">⚠</span>
+    <span class="cy-boss-warning__title">${escapeHtml(bossEffect.name)}</span>
+    <span class="cy-boss-warning__body">${escapeHtml(bossEffect.description)}</span>
   </div>`;
 }
 
@@ -341,6 +417,10 @@ export function renderBoard(
         ${statTile("Disc", String(run.discardsRemaining))}
       </div>
     </div>
+    ${renderVouchersRail(run.vouchers)}
+    ${renderTagsRail(run.tags)}
+    ${renderConsumablesRow(run.consumables, run.maxConsumables)}
+    ${renderBossWarning(run.bossEffect)}
     ${renderJokers(run.jokers, run.maxJokers, true)}
     ${renderHandLevels(run.handLevels)}
 
@@ -411,18 +491,38 @@ function renderPreviewLine(selectedCount: number, preview: ScoreBreakdown | null
 function cardInner(card: Card): string {
   const rank = RANK_LABEL[card.rank];
   const suit = SUIT_SYMBOL[card.suit];
-  return `<span class="r">${rank}</span><span class="p">${suit}</span><span class="r b">${rank}</span>`;
+  return `<span class="r">${rank}</span><span class="p">${suit}</span><span class="r b">${rank}</span>${cardBadges(card)}`;
+}
+
+/** Tiny modifier badge slots — render only when the corresponding modifier is set (PET-67). */
+function cardBadges(card: Card): string {
+  const badges: string[] = [];
+  if (card.enhancement) badges.push(`<span class="card-enh-${card.enhancement}" aria-hidden="true"></span>`);
+  if (card.edition) badges.push(`<span class="card-ed-${card.edition}" aria-hidden="true"></span>`);
+  if (card.seal) badges.push(`<span class="card-seal-${card.seal}" aria-hidden="true"></span>`);
+  if (badges.length === 0) return "";
+  return `<span class="card-mods" aria-hidden="true">${badges.join("")}</span>`;
 }
 
 function cardColor(card: Card): string {
   return card.suit === "hearts" || card.suit === "diamonds" ? "cy-card--red" : "cy-card--black";
 }
 
+/** Edition shimmer alias: PET-77 already ships .card-foil/.card-holo/.card-poly. */
+function cardEditionShimmer(card: Card): string {
+  if (!card.edition) return "";
+  if (card.edition === "foil") return " card-foil";
+  if (card.edition === "holo") return " card-holo";
+  if (card.edition === "poly") return " card-poly";
+  // "negative" is a marker; no shimmer alias (visual lands with PET-75 if desired).
+  return "";
+}
+
 function renderCard(card: Card, selected: boolean, isScoring: boolean, index = 0): string {
   const state = isScoring ? "cy-card--scoring" : selected ? "cy-card--sel" : "";
   // Deal-in stagger (PET-77) + info-button for detail sheet (PET-85).
   const delay = `--deal-delay:${index * 55}ms`;
-  return `<button data-action="toggle-card" data-card-id="${card.id}" class="cy-card card-deal card-hover-lift ${cardColor(card)} ${state}" style="${delay}">${cardInner(card)}<span class="cy-card__info" data-action="open-detail" data-detail-id="card:${card.id}" aria-label="Card details" role="button" tabindex="0">i</span></button>`;
+  return `<button data-action="toggle-card" data-card-id="${card.id}" class="cy-card card-deal card-hover-lift${cardEditionShimmer(card)} ${cardColor(card)} ${state}" style="${delay}">${cardInner(card)}<span class="cy-card__info" data-action="open-detail" data-detail-id="card:${card.id}" aria-label="Card details" role="button" tabindex="0">i</span></button>`;
 }
 
 // ---- play resolution (score animation) -------------------------------------
@@ -501,6 +601,7 @@ export function renderShop(run: RunStateDTO): string {
     run.blindIndex < 2
       ? BLIND_LABEL[BLIND_ORDER[run.blindIndex + 1]!]
       : `Ante ${run.ante + 1} · Small Blind`;
+  const voucherSlot = shop?.voucher ? renderShopVoucherSlot(shop.voucher, run.money) : "";
   return `
   <div class="${SCREEN} gap-4 p-3 sm:p-4 md:p-6">
     <div class="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
@@ -514,15 +615,37 @@ export function renderShop(run: RunStateDTO): string {
         <span class="font-display text-lg font-extrabold text-neon-gold">$${run.money}</span>
       </div>
     </div>
+    ${renderVouchersRail(run.vouchers)}
+    ${renderTagsRail(run.tags)}
+    ${renderConsumablesRow(run.consumables, run.maxConsumables)}
     ${renderJokers(run.jokers, run.maxJokers, true)}
     <div class="text-center font-display text-[10px] uppercase tracking-[0.3em] text-neon-cyan">Shop // Jokers · Planets</div>
     <div class="flex flex-1 items-center">
       <div class="mx-auto grid w-full max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">${items}${empty}</div>
     </div>
+    ${voucherSlot}
     <div class="flex flex-wrap items-center justify-center gap-3">
       <button data-action="reroll" ${canReroll ? "" : "disabled"} class="cy-btn cy-btn--gold">⟲ Reroll $${rerollCost}</button>
       <span class="border border-white/15 px-3 py-1.5 text-[11px] uppercase tracking-wide text-white/70">Next — ${nextLabel}</span>
       <button data-action="continue" class="cy-btn cy-btn--play">Continue ▸</button>
+    </div>
+  </div>`;
+}
+
+/** Single voucher slot rendered below the main shop grid (PET-67 scaffold; PET-76 fills it). */
+function renderShopVoucherSlot(voucher: VoucherShopItem, money: number): string {
+  const afford = money >= voucher.cost;
+  return `
+  <div class="mx-auto w-full max-w-3xl">
+    <div class="cy-panel cy-bd-planet flex items-center gap-3 p-3 cursor-pointer"
+         data-action="open-detail" data-detail-id="shop:${voucher.id}" tabindex="0">
+      <span class="cy-tag cy-tag--planet">Voucher</span>
+      <div class="flex flex-1 flex-col">
+        <span class="font-display text-base font-bold text-neon-cyan sm:text-lg">${escapeHtml(voucher.name)}</span>
+        <span class="text-[11px] text-white/75">${escapeHtml(voucher.description)}</span>
+      </div>
+      <span class="font-display text-lg font-extrabold text-neon-gold">$${voucher.cost}</span>
+      <button data-action="buy" data-item-id="voucher:${voucher.id}" ${afford ? "" : "disabled"} class="cy-btn cy-btn--go cy-btn--sm">Buy</button>
     </div>
   </div>`;
 }
@@ -552,17 +675,46 @@ function renderShopItem(item: ShopItem, money: number, slotsFull: boolean): stri
       </div>
     </div>`;
   }
+  if (item.kind === "planet") {
+    const afford = money >= item.cost;
+    return `
+    <div class="cy-panel cy-bd-planet flex min-h-[150px] flex-col gap-1.5 p-3 cursor-pointer"
+         data-action="open-detail" data-detail-id="shop:${item.id}" tabindex="0">
+      <span class="cy-tag cy-tag--planet">Planet</span>
+      <div class="font-display text-base font-bold leading-tight text-neon-cyan sm:text-lg">${item.name}</div>
+      <div class="text-xs font-semibold text-white/85">+${item.addChips} Chips · +${item.addMult} Mult</div>
+      <div class="flex-1 text-[10px] text-white/60">${HAND_NAME[item.hand]} · Lv ${item.targetLevel - 1} → ${item.targetLevel}</div>
+      <div class="flex items-center justify-between">
+        <span class="font-display text-lg font-extrabold text-neon-gold">$${item.cost}</span>
+        <button data-action="buy" data-item-id="${item.id}" ${afford ? "" : "disabled"} class="cy-btn cy-btn--go cy-btn--sm">Buy</button>
+      </div>
+    </div>`;
+  }
+  if (item.kind === "consumable") {
+    const afford = money >= item.cost;
+    return `
+    <div class="cy-panel cy-bd-planet flex min-h-[150px] flex-col gap-1.5 p-3 cursor-pointer"
+         data-action="open-detail" data-detail-id="shop:${item.id}" tabindex="0">
+      <span class="cy-tag cy-tag--planet">${item.consumableKind}</span>
+      <div class="font-display text-base font-bold leading-tight text-neon-cyan sm:text-lg">${escapeHtml(item.name)}</div>
+      <div class="flex-1 text-[11px] leading-tight text-white/75">${escapeHtml(item.description)}</div>
+      <div class="flex items-center justify-between">
+        <span class="font-display text-lg font-extrabold text-neon-gold">$${item.cost}</span>
+        <button data-action="buy" data-item-id="${item.id}" ${afford ? "" : "disabled"} class="cy-btn cy-btn--go cy-btn--sm">Buy</button>
+      </div>
+    </div>`;
+  }
+  // voucher (in-grid variant — the dedicated slot below the grid is preferred, but a shop may emit one here)
   const afford = money >= item.cost;
   return `
   <div class="cy-panel cy-bd-planet flex min-h-[150px] flex-col gap-1.5 p-3 cursor-pointer"
        data-action="open-detail" data-detail-id="shop:${item.id}" tabindex="0">
-    <span class="cy-tag cy-tag--planet">Planet</span>
-    <div class="font-display text-base font-bold leading-tight text-neon-cyan sm:text-lg">${item.name}</div>
-    <div class="text-xs font-semibold text-white/85">+${item.addChips} Chips · +${item.addMult} Mult</div>
-    <div class="flex-1 text-[10px] text-white/60">${HAND_NAME[item.hand]} · Lv ${item.targetLevel - 1} → ${item.targetLevel}</div>
+    <span class="cy-tag cy-tag--planet">Voucher</span>
+    <div class="font-display text-base font-bold leading-tight text-neon-cyan sm:text-lg">${escapeHtml(item.name)}</div>
+    <div class="flex-1 text-[11px] leading-tight text-white/75">${escapeHtml(item.description)}</div>
     <div class="flex items-center justify-between">
       <span class="font-display text-lg font-extrabold text-neon-gold">$${item.cost}</span>
-      <button data-action="buy" data-item-id="${item.id}" ${afford ? "" : "disabled"} class="cy-btn cy-btn--go cy-btn--sm">Buy</button>
+      <button data-action="buy" data-item-id="voucher:${item.voucherId}" ${afford ? "" : "disabled"} class="cy-btn cy-btn--go cy-btn--sm">Buy</button>
     </div>
   </div>`;
 }
@@ -698,7 +850,9 @@ export function renderDetailFor(detailId: string, run: RunStateDTO | null): stri
     });
   }
   if (kind === "shop") {
-    const it = run.shop?.items.find((x) => x.id === id);
+    const it =
+      run.shop?.items.find((x) => x.id === id) ??
+      (run.shop?.voucher && run.shop.voucher.id === id ? run.shop.voucher : undefined);
     if (!it) return null;
     if (it.kind === "joker") {
       const slotsFull = run.jokers.length >= run.maxJokers;
@@ -711,15 +865,75 @@ export function renderDetailFor(detailId: string, run: RunStateDTO | null): stri
         actions: [{ action: "buy", label: buyLabel, variant: "go", data: { "item-id": it.id }, disabled }],
       });
     }
+    if (it.kind === "planet") {
+      const afford = run.money >= it.cost;
+      return renderDetailSheet({
+        title: it.name,
+        body: `<p class="text-[11px] uppercase tracking-widest text-neon-gold">Planet</p>
+               <p class="mt-1">+${it.addChips} Chips · +${it.addMult} Mult to <span class="text-neon-pink">${HAND_NAME[it.hand]}</span></p>
+               <p class="mt-1 text-white/60">Lv ${it.targetLevel - 1} → ${it.targetLevel}</p>`,
+        actions: [
+          { action: "buy", label: `Buy · $${it.cost}`, variant: "go", data: { "item-id": it.id }, disabled: !afford },
+        ],
+      });
+    }
+    if (it.kind === "consumable") {
+      const afford = run.money >= it.cost;
+      return renderDetailSheet({
+        title: it.name,
+        body: `<p class="text-[11px] uppercase tracking-widest text-neon-gold">${it.consumableKind}</p>
+               <p class="mt-1">${escapeHtml(it.description)}</p>`,
+        actions: [
+          { action: "buy", label: `Buy · $${it.cost}`, variant: "go", data: { "item-id": it.id }, disabled: !afford },
+        ],
+      });
+    }
+    // voucher
     const afford = run.money >= it.cost;
     return renderDetailSheet({
       title: it.name,
-      body: `<p class="text-[11px] uppercase tracking-widest text-neon-gold">Planet</p>
-             <p class="mt-1">+${it.addChips} Chips · +${it.addMult} Mult to <span class="text-neon-pink">${HAND_NAME[it.hand]}</span></p>
-             <p class="mt-1 text-white/60">Lv ${it.targetLevel - 1} → ${it.targetLevel}</p>`,
+      body: `<p class="text-[11px] uppercase tracking-widest text-neon-gold">Voucher</p>
+             <p class="mt-1">${escapeHtml(it.description)}</p>`,
       actions: [
-        { action: "buy", label: `Buy · $${it.cost}`, variant: "go", data: { "item-id": it.id }, disabled: !afford },
+        {
+          action: "buy",
+          label: `Buy · $${it.cost}`,
+          variant: "go",
+          data: { "item-id": `voucher:${it.voucherId}` },
+          disabled: !afford,
+        },
       ],
+    });
+  }
+  if (kind === "consumable") {
+    const c = run.consumables.find((x) => x.id === id);
+    if (!c) return null;
+    return renderDetailSheet({
+      title: c.name,
+      body: `<p class="text-[11px] uppercase tracking-widest text-neon-gold">${c.kind}</p>
+             <p class="mt-1">${escapeHtml(c.description)}</p>`,
+      actions: [
+        { action: "use-consumable", label: "Use", variant: "go", data: { "instance-id": c.id } },
+        { action: "sell-consumable", label: "Sell", variant: "gold", data: { "instance-id": c.id } },
+      ],
+    });
+  }
+  if (kind === "voucher") {
+    const v = run.vouchers.find((x) => x.id === id);
+    if (!v) return null;
+    return renderDetailSheet({
+      title: v.name,
+      body: `<p class="text-[11px] uppercase tracking-widest text-neon-gold">Voucher</p>
+             <p class="mt-1">${escapeHtml(v.description)}</p>`,
+    });
+  }
+  if (kind === "tag") {
+    const t = run.tags.find((x) => x.id === id);
+    if (!t) return null;
+    return renderDetailSheet({
+      title: t.name,
+      body: `<p class="text-[11px] uppercase tracking-widest text-neon-cyan">Tag</p>
+             <p class="mt-1">${escapeHtml(t.description)}</p>`,
     });
   }
   return null;

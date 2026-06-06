@@ -3,10 +3,57 @@
 export type Suit = "clubs" | "diamonds" | "hearts" | "spades";
 export type Rank = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
 
+/** Foundation modifier scaffolding (PET-67). Content streams (PET-75) populate the catalogs. */
+export type Enhancement =
+  | "bonus"
+  | "mult"
+  | "wild"
+  | "glass"
+  | "steel"
+  | "stone"
+  | "gold"
+  | "lucky";
+export type Edition = "foil" | "holo" | "poly" | "negative";
+export type Seal = "red" | "blue" | "gold" | "purple";
+
 export interface Card {
   id: string;
   rank: Rank;
   suit: Suit;
+  /** Optional modifiers — undefined until PET-75 content lands. */
+  enhancement?: Enhancement;
+  edition?: Edition;
+  seal?: Seal;
+}
+
+/** A consumable (tarot/planet/spectral) the player owns or is offered. */
+export interface Consumable {
+  id: string;
+  defId: string;
+  name: string;
+  description: string;
+  kind: "tarot" | "planet" | "spectral";
+}
+
+/** A purchased voucher applying a run-long modifier. */
+export interface Voucher {
+  id: string;
+  name: string;
+  description: string;
+}
+
+/** A skip-blind tag carried into the next blind. */
+export interface Tag {
+  id: string;
+  name: string;
+  description: string;
+}
+
+/** A boss-blind modifier active on the current blind. */
+export interface BossEffect {
+  id: string;
+  name: string;
+  description: string;
 }
 
 export type Difficulty = "easy" | "medium" | "hard";
@@ -102,11 +149,32 @@ export interface JokerShopItem {
   rarity: "common" | "uncommon" | "rare";
 }
 
-export type ShopItem = PlanetShopItem | JokerShopItem;
+export interface ConsumableShopItem {
+  id: string;
+  kind: "consumable";
+  defId: string;
+  consumableKind: "tarot" | "planet" | "spectral";
+  name: string;
+  description: string;
+  cost: number;
+}
+
+export interface VoucherShopItem {
+  id: string;
+  kind: "voucher";
+  voucherId: string;
+  name: string;
+  description: string;
+  cost: number;
+}
+
+export type ShopItem = PlanetShopItem | JokerShopItem | ConsumableShopItem | VoucherShopItem;
 
 export interface ShopState {
   items: ShopItem[];
   rerollCost: number;
+  /** Optional single voucher slot offered alongside the items grid (PET-67 mirror). */
+  voucher?: VoucherShopItem | null;
 }
 
 export interface RunStateDTO {
@@ -134,6 +202,13 @@ export interface RunStateDTO {
   lastPlay: PlayResult | null;
   pendingReward: number | null;
   shop: ShopState | null;
+  /** Foundation extensions (PET-67). Default to empty so existing runs keep working. */
+  consumables: Consumable[];
+  maxConsumables: number;
+  vouchers: Voucher[];
+  tags: Tag[];
+  bossEffect: BossEffect | null;
+  skipsThisRun: number;
 }
 
 export interface PreviewResponse extends RunStateDTO {
