@@ -461,79 +461,348 @@ body::before {
    ---------------------------------------------------------------------
    Catalogs are empty at this PR; content streams (PET-71/74/75/76/78/83)
    fill them in. The empty-state rules below keep the layout from
-   shifting when there's nothing to show.
+   shifting when there's nothing to show. Visuals are aligned to
+   ante-pack.html (rails, boss node, hero/score) and design-pack.html
+   (component palette, clip-paths, neon glow recipes).
    ===================================================================== */
 
 /* vouchers / tags rails — collapse to zero when empty so the layout doesn't shift */
 .cy-vouchers, .cy-tags, .cy-consumables { min-height: 0; }
 .cy-vouchers--empty, .cy-tags--empty, .cy-consumables--empty { display: none; }
 
-.cy-voucher, .cy-tag-pill {
+/* RAIL LABEL CHIP — small leading "VOUCHERS" / "TAGS" / "CONSUMABLES" header
+   echoes ante-pack .pathlbl + .jokerstrip .lbl typography. Hidden until populated. */
+.cy-rail-lbl {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #7fdfff;
+  align-self: center;
+  margin-right: 4px;
+}
+
+/* VOUCHERS — gold-rimmed clipped pill, mirrors cyber.css .voucher (shop-pack)
+   shrunk to a rail chip; top border accent in gold per ante-pack money chip. */
+.cy-voucher {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 10px;
-  background: rgba(255, 197, 61, 0.08);
+  padding: 5px 11px;
+  background: rgba(255, 197, 61, 0.06);
   border: 1px solid rgba(255, 197, 61, 0.5);
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%);
+  border-top: 2px solid var(--color-neon-gold);
+  box-shadow: inset 0 0 12px rgba(176, 38, 255, 0.08);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+  font-family: "Chakra Petch", sans-serif;
   font-size: clamp(10px, 2.4vw, 12px);
   color: var(--color-neon-gold);
   cursor: pointer;
+  transition: filter 0.15s, box-shadow 0.15s;
 }
-.cy-tag-pill {
-  background: rgba(0, 229, 255, 0.08);
-  border-color: rgba(0, 229, 255, 0.5);
-  color: var(--color-neon-cyan);
+.cy-voucher:hover, .cy-voucher:focus { box-shadow: 0 0 14px rgba(255, 197, 61, 0.35); outline: none; }
+.cy-voucher__icon {
+  font-family: "Orbitron", sans-serif; font-weight: 800;
+  color: var(--color-neon-gold);
 }
-.cy-voucher__icon, .cy-tag-pill__icon { font-family: "Orbitron", sans-serif; font-weight: 800; }
-.cy-voucher__name, .cy-tag-pill__name { font-family: "Chakra Petch", sans-serif; font-weight: 600; letter-spacing: 0.04em; }
+.cy-voucher__name {
+  font-family: "Orbitron", sans-serif; font-weight: 700;
+  font-size: 11px; letter-spacing: 0.08em;
+  color: #fff;
+  text-transform: uppercase;
+}
 
-/* consumables row — same clipped corner as the joker slots */
+/* TAGS — violet-rimmed pill mirroring ante-pack .tag.violet + .heldtag treatment.
+   "★ NAME" pattern matches the ante-pack tag chips in the held-tag HUD. */
+.cy-tag-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  background: rgba(176, 38, 255, 0.12);
+  border: 1px solid var(--color-neon-violet);
+  clip-path: polygon(7px 0, 100% 0, 100% 100%, 0 100%, 0 7px);
+  font-family: "Chakra Petch", sans-serif;
+  font-weight: 700;
+  font-size: clamp(9px, 2.2vw, 11px);
+  letter-spacing: 0.12em;
+  color: #e9c9ff;
+  cursor: pointer;
+  transition: filter 0.15s, box-shadow 0.15s;
+}
+.cy-tag-pill:hover, .cy-tag-pill:focus { box-shadow: 0 0 12px rgba(176, 38, 255, 0.35); outline: none; }
+.cy-tag-pill__icon {
+  font-family: "Orbitron", sans-serif; font-weight: 800;
+  color: var(--color-neon-gold); /* star/glyph in gold per ante-pack .tag .star */
+}
+.cy-tag-pill__name { color: #fff; letter-spacing: 0.06em; }
+
+/* CONSUMABLES — violet-frame chips mirroring ante-pack .item.pack accent
+   + cyber.css .jchip clip-path. Tarot/planet/spectral kind in micro-uppercase. */
 .cy-consumable {
-  display: flex; flex-direction: column; align-items: flex-start;
+  position: relative;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
   min-height: 3.5rem;
   width: 5rem;
-  padding: 6px 8px;
-  background: rgba(176, 38, 255, 0.06);
-  border: 1px solid rgba(176, 38, 255, 0.5);
+  padding: 6px 9px;
+  background: rgba(176, 38, 255, 0.08);
+  border: 1px solid var(--color-neon-violet);
+  border-left: 3px solid var(--color-neon-violet);
+  box-shadow: 0 0 10px rgba(176, 38, 255, 0.2);
   clip-path: polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 calc(100% - 8px));
   cursor: pointer;
+  transition: filter 0.15s, box-shadow 0.15s;
+}
+.cy-consumable:hover, .cy-consumable:focus {
+  box-shadow: 0 0 16px rgba(176, 38, 255, 0.45);
+  outline: none;
 }
 @media (min-width: 640px) { .cy-consumable { width: 6rem; } }
 .cy-consumable__kind {
   font-family: "Orbitron", sans-serif; font-weight: 700;
-  font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--color-neon-violet);
+  font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: #d9a8ff; /* violet-tint per ante-pack .jbuild .nm */
 }
 .cy-consumable__name {
-  font-family: "Chakra Petch", sans-serif; font-weight: 700;
+  font-family: "Orbitron", sans-serif; font-weight: 800;
   font-size: 10px; line-height: 1.15;
   color: #fff;
   margin-top: 2px;
 }
 .cy-consumable-slot { min-height: 3.5rem; }
 
-/* boss-effect warning banner — danger-tinted, clipped, neon pink border */
+/* BOSS-EFFECT WARNING BANNER — full-width pink strip with neon glow + chevron.
+   Mirrors ante-pack .node.boss treatment (pink left border, danger tint, warn icon,
+   .beff italic body text) collapsed to a horizontal rail.
+   This is the "boss-blind danger-tinted top callout" called out in the task. */
 .cy-boss-warning {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
-  padding: 8px 14px;
-  background: rgba(255, 46, 151, 0.12);
-  border: 1px solid var(--color-neon-pink);
-  box-shadow: 0 0 16px rgba(255, 46, 151, 0.3);
-  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
-  color: #ffd9ec;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  padding: 9px 16px;
+  background: rgba(255, 46, 151, 0.10);
+  border: 1px solid rgba(255, 46, 151, 0.5);
+  border-left: 3px solid var(--color-neon-pink);
+  box-shadow: 0 0 18px rgba(255, 46, 151, 0.3), inset 0 0 24px rgba(255, 46, 151, 0.08);
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  color: #ffd0e4;
   font-family: "Chakra Petch", sans-serif;
   font-size: clamp(11px, 2.6vw, 13px);
 }
 .cy-boss-warning__icon {
   font-family: "Orbitron", sans-serif; font-weight: 900;
+  font-size: clamp(13px, 3vw, 16px);
   color: var(--color-neon-pink);
-  text-shadow: 0 0 6px var(--color-neon-pink);
+  text-shadow: 0 0 8px var(--color-neon-pink);
 }
 .cy-boss-warning__title {
   font-family: "Orbitron", sans-serif; font-weight: 800;
-  letter-spacing: 0.1em; text-transform: uppercase;
+  font-size: clamp(11px, 2.6vw, 13px);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(255, 46, 151, 0.5);
+}
+.cy-boss-warning__body {
+  color: #ffd0e4;
+  opacity: 0.92;
+  font-size: clamp(10px, 2.4vw, 12px);
+  flex: 1 1 auto;
+  min-width: 12rem;
+}
+
+/* =====================================================================
+   BLIND SELECT — mirrors ante-pack Screen 2 .blindtok grid.
+   .cy-blindtok = the focal card; Play+Skip stack as a "dual" row.
+   The hero variant (lime) is used for the current blind, pink for boss.
+   ===================================================================== */
+.cy-blindtok {
+  position: relative;
+  width: clamp(280px, 86vw, 360px);
+  min-height: 280px;
+  padding: 18px 18px 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+}
+/* current = lime hero card (per ante-pack .blindtok.big) */
+.cy-blindtok--current {
+  background: rgba(140, 255, 91, 0.06);
+  border-color: var(--color-neon-lime);
+  box-shadow: 0 0 24px rgba(140, 255, 91, 0.35);
+}
+/* boss = pink danger card (per ante-pack .blindtok.boss) */
+.cy-blindtok--boss {
+  background: rgba(255, 46, 151, 0.06);
+  border-color: var(--color-neon-pink);
+  box-shadow: 0 0 24px rgba(255, 46, 151, 0.35);
+}
+.cy-blindtok__danger {
+  position: absolute; top: 10px; left: 12px;
+  font-family: "Orbitron", sans-serif; font-weight: 900;
+  font-size: 13px;
+  color: var(--color-neon-pink);
+  text-shadow: 0 0 8px var(--color-neon-pink);
+}
+.cy-blindtok__pips { display: flex; gap: 6px; }
+.cy-blindtok__pips i {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  display: inline-block;
+}
+.cy-blindtok__pips i.done {
+  background: var(--color-neon-lime);
+  box-shadow: 0 0 6px var(--color-neon-lime);
+}
+.cy-blindtok__pips i.on {
+  background: var(--color-neon-lime);
+  box-shadow: 0 0 8px var(--color-neon-lime);
+}
+.cy-blindtok--boss .cy-blindtok__pips i.on {
+  background: var(--color-neon-pink);
+  box-shadow: 0 0 8px var(--color-neon-pink);
+}
+.cy-blindtok__kicker {
+  font-family: "Orbitron", sans-serif; font-weight: 700;
+  font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+.cy-blindtok__name {
+  font-family: "Orbitron", sans-serif; font-weight: 900;
+  font-size: clamp(22px, 6vw, 28px);
+  letter-spacing: 0.04em;
   color: #fff;
 }
-.cy-boss-warning__body { color: #ffd9ec; }
+.cy-blindtok--current .cy-blindtok__name { color: #fff; }
+.cy-blindtok--boss .cy-blindtok__name {
+  color: var(--color-neon-pink);
+  text-shadow: 0 0 12px rgba(255, 46, 151, 0.6);
+}
+.cy-blindtok__mult {
+  font-family: "Orbitron", sans-serif; font-weight: 900;
+  font-size: clamp(24px, 6vw, 30px);
+}
+.cy-blindtok--current .cy-blindtok__mult { color: var(--color-neon-lime); }
+.cy-blindtok--boss .cy-blindtok__mult { color: var(--color-neon-pink); }
+.cy-blindtok__tgt {
+  font-family: ui-monospace, monospace;
+  font-size: 10px; letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+.cy-blindtok__tgt b {
+  display: block;
+  margin-top: 3px;
+  font-family: "Orbitron", sans-serif; font-weight: 900;
+  font-size: clamp(28px, 8vw, 36px);
+  color: var(--color-neon-cyan);
+  text-shadow: 0 0 14px rgba(0, 229, 255, 0.55);
+}
+.cy-blindtok--boss .cy-blindtok__tgt b {
+  color: var(--color-neon-pink);
+  text-shadow: 0 0 14px rgba(255, 46, 151, 0.55);
+}
+.cy-blindtok__rew {
+  font-size: 11px;
+  color: var(--color-neon-gold);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.cy-blindtok__dual {
+  display: flex; gap: 8px;
+  margin-top: auto;
+  padding-top: 8px;
+  width: 100%;
+  justify-content: center;
+}
+.cy-blindtok__noskip {
+  font-family: "Orbitron", sans-serif; font-weight: 700;
+  font-size: 9px; letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.55);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  padding: 7px 10px;
+  margin-top: auto;
+}
+
+/* SKIP button variant — violet ghost button per ante-pack .hero .skip */
+.cy-btn--skip {
+  background: transparent;
+  color: var(--color-neon-violet);
+  border-color: var(--color-neon-violet);
+}
+
+/* =====================================================================
+   CONSUMABLE-SELECTION BANNER — pink-tinted Cyber-HUD strip with
+   live picked/max counter neon, per design-pack.html "panels & tiles" pink
+   panel + the clip-path frame recipe. Replaces the bare .cy-panel--pink
+   wrapper inside renderConsumableSelectionPrompt.
+   ===================================================================== */
+.cy-consu-prompt {
+  position: relative;
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: rgba(255, 46, 151, 0.10);
+  border: 1px solid var(--color-neon-pink);
+  border-left: 3px solid var(--color-neon-pink);
+  box-shadow: 0 0 20px rgba(255, 46, 151, 0.35), inset 0 0 18px rgba(255, 46, 151, 0.08);
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+.cy-consu-prompt__kind {
+  font-family: "Orbitron", sans-serif; font-weight: 700;
+  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+  padding: 4px 9px;
+  background: var(--color-neon-violet);
+  color: #1a0026;
+}
+.cy-consu-prompt__name {
+  font-family: "Orbitron", sans-serif; font-weight: 900;
+  font-size: clamp(13px, 3.4vw, 17px);
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255, 46, 151, 0.6);
+}
+.cy-consu-prompt__instr {
+  font-family: "Chakra Petch", sans-serif;
+  font-size: clamp(10px, 2.4vw, 12px);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+}
+.cy-consu-prompt__count {
+  font-family: "Orbitron", sans-serif; font-weight: 900;
+  font-size: clamp(13px, 3.4vw, 16px);
+  color: var(--color-neon-cyan);
+  text-shadow: 0 0 10px var(--color-neon-cyan);
+}
+.cy-consu-prompt__count--ready {
+  color: var(--color-neon-lime);
+  text-shadow: 0 0 10px var(--color-neon-lime);
+}
+
+/* =====================================================================
+   PLAY-RESOLUTION SCORE BLOCK — handname + Lv pill mirror ante-pack
+   .dir2 .handname / .handname small. Total readout sits on top of the
+   existing .cy-chip/.cy-mult scoreboard, which already matches.
+   ===================================================================== */
+.cy-handname {
+  font-family: "Orbitron", sans-serif; font-weight: 900;
+  font-size: clamp(1.5rem, 6vw, 2rem);
+  letter-spacing: 0.06em;
+  color: #fff;
+  text-shadow: 0 0 10px var(--color-neon-pink), 0 0 22px rgba(255, 46, 151, 0.5);
+}
+.cy-handname__lvl {
+  display: inline-block;
+  margin-left: 10px;
+  font-family: "Chakra Petch", sans-serif; font-weight: 600;
+  font-size: clamp(0.7rem, 2.4vw, 0.9rem);
+  letter-spacing: 0.14em;
+  color: var(--color-neon-lime);
+  text-shadow: 0 0 6px var(--color-neon-lime);
+}
+.cy-final-score {
+  font-family: "Orbitron", sans-serif; font-weight: 900;
+  font-size: clamp(2.6rem, 12vw, 4rem);
+  line-height: 0.9;
+  color: #fff;
+  text-shadow: 0 0 14px var(--color-neon-cyan), 0 0 30px rgba(0, 229, 255, 0.5),
+    -2px 0 var(--color-neon-pink), 2px 0 var(--color-neon-cyan);
+}
 
 /* modifier badge slot placeholders — declared empty here (PET-67); content
    streams (PET-75) attach the actual visuals. Hosts must be .cy-card; the

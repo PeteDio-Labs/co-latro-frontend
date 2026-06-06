@@ -228,12 +228,13 @@ function difficultyButton(value: string, label: string, detail: string): string 
 
 export function renderBlindSelect(run: RunStateDTO): string {
   const boss = run.blindKind === "boss";
-  const bossTag = boss ? `<div class="cy-tag cy-tag--rare">⚠ Boss Blind</div>` : "";
-  // Skip is available on small/big blinds (PET-67 scaffold; backend may 400 until PET-78).
+  // Skip available on small/big blinds — PET-78 wires the tag-reward backend; here we expose the button.
   const canSkip = run.blindKind === "small" || run.blindKind === "big";
-  const skipBtn = canSkip
-    ? `<button data-action="skip-blind" class="cy-btn cy-btn--ghost !text-base px-10">Skip ▸</button>`
-    : "";
+  // Mirror ante-pack.html Screen 2 `.blindtok.{small|big|boss}` — pips, kicker, big name, mult,
+  // SCORE TO BEAT (cyan focal, pink on boss), reward, and a "dual" Play+Skip row.
+  // Boss variant gets the danger glyph + "NO SKIP" badge per `.blindtok.boss + .noskip`.
+  const variantClass = boss ? "cy-blindtok--boss" : "cy-blindtok--current";
+  const danger = boss ? `<span class="cy-blindtok__danger" aria-hidden="true">⚠</span>` : "";
   return `
   <div class="${SCREEN} gap-4 p-3 sm:p-4 md:p-6 ${boss ? "cy-boss" : ""}">
     ${topBar(run)}
@@ -243,29 +244,43 @@ export function renderBlindSelect(run: RunStateDTO): string {
     ${renderBossWarning(run.bossEffect)}
     ${renderJokers(run.jokers, run.maxJokers, true)}
     <div class="flex flex-1 flex-col items-center justify-center gap-5">
-      <div class="text-center">
-        <div class="font-display text-xs uppercase tracking-[0.3em] text-neon-cyan">Ante ${run.ante} / ${run.maxAnte}</div>
-        <h2 class="mt-1 font-display text-3xl font-black sm:text-4xl ${boss ? "text-neon-pink neon-text" : "text-white neon-cyan-text"}">${BLIND_LABEL[run.blindKind]}</h2>
+      <div class="font-display text-[10px] uppercase tracking-[0.28em] text-neon-cyan">Ante ${run.ante} / ${run.maxAnte} // choose your fight</div>
+      <div class="cy-blindtok ${variantClass}">
+        ${danger}
+        <div class="cy-blindtok__pips">${blindTokPip(0, run.blindIndex)}${blindTokPip(1, run.blindIndex)}${blindTokPip(2, run.blindIndex)}</div>
+        <div class="cy-blindtok__kicker">Ante ${run.ante} · ${run.blindKind.toUpperCase()}</div>
+        <div class="cy-blindtok__name">${BLIND_LABEL[run.blindKind].replace(/ Blind$/i, " BLIND")}</div>
+        <div class="cy-blindtok__mult">${BLIND_MULT[run.blindKind]}</div>
+        <div class="cy-blindtok__tgt">SCORE TO BEAT<b>${run.target}</b></div>
+        <div class="cy-blindtok__rew">$${BLIND_REWARD[run.blindKind]} + $1 / hand</div>
+        ${canSkip
+          ? `<div class="cy-blindtok__dual">
+               <button data-action="start-blind" class="cy-btn cy-btn--play cy-btn--sm">Play ▸</button>
+               <button data-action="skip-blind" class="cy-btn cy-btn--skip cy-btn--sm">Skip → Tag</button>
+             </div>`
+          : `<div class="cy-blindtok__dual">
+               <button data-action="start-blind" class="cy-btn cy-btn--play">Play ${BLIND_LABEL[run.blindKind]} ▸</button>
+             </div>
+             <div class="cy-blindtok__noskip">NO SKIP — must be played</div>`}
       </div>
-      ${bossTag}
-      <div class="flex gap-3">${blindPip(0, run.blindIndex)}${blindPip(1, run.blindIndex)}${blindPip(2, run.blindIndex)}</div>
-      <div class="cy-panel ${boss ? "cy-panel--pink" : ""} flex flex-col items-center gap-1 px-8 py-5 sm:px-12">
-        <div class="text-[10px] uppercase tracking-widest text-white/60">Score to beat</div>
-        <div class="font-display text-4xl font-black text-neon-cyan neon-cyan-text sm:text-5xl">${run.target}</div>
-        <div class="mt-1 text-xs text-white/70">Reward $${BLIND_REWARD[run.blindKind]} + $1 / hand left</div>
-      </div>
-      <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-        <button data-action="start-blind" class="cy-btn cy-btn--play !text-base px-10">Play ${BLIND_LABEL[run.blindKind]} ▸</button>
-        ${skipBtn}
-      </div>
-      <div class="text-sm text-white/60">Money: <span class="font-display text-neon-gold">$${run.money}</span></div>
+      <div class="text-sm text-white/60">Money: <span class="font-display text-neon-gold">$${run.money}</span> · Hands ${run.handsRemaining} · Discards ${run.discardsRemaining}</div>
     </div>
   </div>`;
 }
 
-// ---- foundation slot containers (PET-67) ----------------------------------
+/** Pip for the .cy-blindtok pip row — matches ante-pack `.blindtok .pips i.on`. */
+function blindTokPip(index: number, current: number): string {
+  if (index < current) return `<i class="done"></i>`;
+  if (index === current) return `<i class="on"></i>`;
+  return `<i></i>`;
+}
 
-/** Owned vouchers — empty when no vouchers, content streams (PET-76) populate. */
+// ---- foundation slot containers (PET-67) ----------------------------------
+// Visual reference: ante-pack.html .tagrow / .voucher / .item.pack rails — small leading
+// rail label (Orbitron, 9px, 0.22em tracking, cyan) + clipped chips with role colors.
+
+/** Owned vouchers — gold-rimmed clipped pills (per cyber.css .voucher in shop-pack).
+ *  Empty when no vouchers; content streams (PET-76) populate. */
 function renderVouchersRail(vouchers: Voucher[]): string {
   if (vouchers.length === 0) return `<div class="cy-vouchers cy-vouchers--empty" aria-hidden="true"></div>`;
   const items = vouchers
@@ -276,24 +291,30 @@ function renderVouchersRail(vouchers: Voucher[]): string {
       </div>`,
     )
     .join("");
-  return `<div class="cy-vouchers flex flex-wrap items-center justify-center gap-1.5">${items}</div>`;
+  return `<div class="cy-vouchers flex flex-wrap items-center justify-center gap-1.5">
+    <span class="cy-rail-lbl">Vouchers</span>${items}
+  </div>`;
 }
 
-/** Carried skip-blind tags — empty when no tags, content streams (PET-78) populate. */
+/** Carried skip-blind tags — violet-frame pills with gold star glyph
+ *  (per ante-pack .tag.violet + .heldtag in the status bar). Content streams (PET-78). */
 function renderTagsRail(tags: Tag[]): string {
   if (tags.length === 0) return `<div class="cy-tags cy-tags--empty" aria-hidden="true"></div>`;
   const items = tags
     .map(
       (t) => `<div class="cy-tag-pill" data-action="open-detail" data-detail-id="tag:${t.id}" tabindex="0" title="${escapeHtml(t.description)}">
-        <span class="cy-tag-pill__icon" aria-hidden="true">▣</span>
+        <span class="cy-tag-pill__icon" aria-hidden="true">★</span>
         <span class="cy-tag-pill__name">${escapeHtml(t.name)}</span>
       </div>`,
     )
     .join("");
-  return `<div class="cy-tags flex flex-wrap items-center justify-center gap-1.5">${items}</div>`;
+  return `<div class="cy-tags flex flex-wrap items-center justify-center gap-1.5">
+    <span class="cy-rail-lbl">Tags</span>${items}
+  </div>`;
 }
 
-/** Owned consumables row (tarot/planet/spectral) — empty slot placeholders + owned items. */
+/** Owned consumables row (tarot/planet/spectral) — violet-accent chips per
+ *  ante-pack .item.pack + .jchip clip-path. Empty slot placeholders + owned items. */
 function renderConsumablesRow(consumables: Consumable[], maxConsumables: number): string {
   const slotCount = Math.max(maxConsumables, consumables.length);
   if (slotCount === 0) return `<div class="cy-consumables cy-consumables--empty" aria-hidden="true"></div>`;
@@ -309,10 +330,14 @@ function renderConsumablesRow(consumables: Consumable[], maxConsumables: number)
         : `<div class="cy-slot cy-consumable-slot min-h-[3.5rem] w-20 shrink-0 sm:w-24">slot</div>`,
     );
   }
-  return `<div class="cy-consumables flex flex-wrap items-stretch justify-center gap-1.5 sm:gap-2">${slots.join("")}</div>`;
+  return `<div class="cy-consumables flex flex-wrap items-stretch justify-center gap-1.5 sm:gap-2">
+    <span class="cy-rail-lbl">Consumables</span>${slots.join("")}
+  </div>`;
 }
 
-/** Boss-effect danger banner — only renders when a boss effect is active. */
+/** Boss-effect danger banner — pink-tinted full-width callout with chevron warn glyph.
+ *  Mirrors ante-pack .node.boss treatment (pink left border, danger tint, .beff body).
+ *  Only renders when a boss effect is active. */
 function renderBossWarning(bossEffect: BossEffect | null): string {
   if (!bossEffect) return "";
   return `<div class="cy-boss-warning" role="status">
@@ -320,16 +345,6 @@ function renderBossWarning(bossEffect: BossEffect | null): string {
     <span class="cy-boss-warning__title">${escapeHtml(bossEffect.name)}</span>
     <span class="cy-boss-warning__body">${escapeHtml(bossEffect.description)}</span>
   </div>`;
-}
-
-function blindPip(index: number, current: number): string {
-  const cls =
-    index < current
-      ? "bg-neon-cyan"
-      : index === current
-        ? "bg-neon-pink neon-btn"
-        : "bg-white/10 border border-neon-violet/40";
-  return `<span class="h-3.5 w-3.5 rounded-full ${cls}"></span>`;
 }
 
 // ---- jokers ----------------------------------------------------------------
@@ -457,18 +472,22 @@ export function renderBoard(
 }
 
 /** Top-of-cards banner shown while a consumable is awaiting target selection (PET-71).
- *  Renders consumable name + a live N/Max counter so the player can see when Confirm unlocks. */
+ *  Renders consumable name + a live N/Max counter so the player can see when Confirm unlocks.
+ *  Cyber-HUD strip: pink-tinted, clip-path frame, violet kind chip (per design-pack.html
+ *  panel + .rtag.legendary recipe). Counter goes lime when in valid range. */
 function renderConsumableSelectionPrompt(def: Consumable, picked: number): string {
   const sel = def.needsSelection;
   if (!sel) return "";
   const target = sel.from === "hand" ? "cards" : "jokers";
   const range = sel.min === sel.max ? `${sel.min}` : `${sel.min}–${sel.max}`;
+  const ready = picked >= sel.min && picked <= sel.max;
   return `
-  <div class="cy-panel cy-panel--pink flex flex-col items-center gap-1 px-4 py-2 sm:flex-row sm:gap-3">
-    <span class="cy-tag cy-tag--planet">${escapeHtml(def.kind)}</span>
-    <span class="font-display text-base font-black text-neon-pink neon-text">${escapeHtml(def.name)}</span>
-    <span class="text-[11px] uppercase tracking-widest text-white/75">
-      Pick ${range} ${target} · <span class="font-display text-neon-cyan">${picked}/${sel.max}</span>
+  <div class="cy-consu-prompt" role="status">
+    <span class="cy-consu-prompt__kind">${escapeHtml(def.kind)}</span>
+    <span class="cy-consu-prompt__name">${escapeHtml(def.name)}</span>
+    <span class="cy-consu-prompt__instr">
+      Pick ${range} ${target} ·
+      <span class="cy-consu-prompt__count${ready ? " cy-consu-prompt__count--ready" : ""}">${picked}/${sel.max}</span>
     </span>
   </div>`;
 }
@@ -599,15 +618,21 @@ export function renderPlayResolution(anim: AnimState): string {
           .join("")}</div>`
       : "";
 
-  const lvl = anim.breakdown.handLevel > 1 ? ` Lv${anim.breakdown.handLevel}` : "";
+  // Hand name + level pill mirror ante-pack `.dir2 .handname` + `.handname small`
+  // (Orbitron 800 16px name · lime "LV N" pill 11px). The total readout below
+  // uses .cy-chip / .cy-mult (which already match ante-pack's `.chipbox` / `.multbox`).
+  const lvlPill =
+    anim.breakdown.handLevel > 1
+      ? `<span class="cy-handname__lvl">LV ${anim.breakdown.handLevel}</span>`
+      : "";
   const scoreBlock =
     anim.phase === "total"
-      ? `<div class="font-display text-5xl font-black text-white neon-text sm:text-6xl">${anim.score}</div>`
+      ? `<div class="cy-final-score">${anim.score}</div>`
       : `<div class="h-14 sm:h-16"></div>`;
 
   return `
   <div class="cy-screen flex flex-col items-center justify-center gap-5 p-4 sm:gap-6 sm:p-6">
-    <div class="font-display text-2xl font-black text-neon-pink neon-text sm:text-3xl">${anim.breakdown.handLabel}${lvl}</div>
+    <div class="cy-handname">${escapeHtml(anim.breakdown.handLabel)}${lvlPill}</div>
     ${jokersRow}
     <div class="flex flex-wrap items-end justify-center gap-1.5 sm:gap-2">${cardsHtml}</div>
     <div class="flex items-center gap-2 sm:gap-3">
