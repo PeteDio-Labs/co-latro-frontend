@@ -68,7 +68,15 @@ export interface BossEffect {
 }
 
 export type Difficulty = "easy" | "medium" | "hard";
-export type RunStatus = "selecting_blind" | "playing" | "shop" | "won_run" | "lost_run";
+/** "pack_open" is added for the booster-pack pick-of-N viewer (PET-70). Backend may not emit it yet;
+ *  router falls back gracefully when run.openingPack is absent. */
+export type RunStatus =
+  | "selecting_blind"
+  | "playing"
+  | "shop"
+  | "pack_open"
+  | "won_run"
+  | "lost_run";
 export type BlindKind = "small" | "big" | "boss";
 
 export type HandType =
@@ -179,13 +187,56 @@ export interface VoucherShopItem {
   cost: number;
 }
 
-export type ShopItem = PlanetShopItem | JokerShopItem | ConsumableShopItem | VoucherShopItem;
+/** Booster-pack offering in the shop (PET-70). `family` accents the card
+ *  (arcana=violet · celestial=gold · buffoon=pink · spectral=cyan · standard=lime). */
+export type PackFamily = "arcana" | "celestial" | "buffoon" | "spectral" | "standard";
+
+export interface PackShopItem {
+  id: string;
+  kind: "pack";
+  packId: string;
+  name: string;
+  description: string;
+  cost: number;
+  family: PackFamily;
+  /** "Choose N of M" — N = picksAllowed, M = optionsCount. */
+  picksAllowed: number;
+  optionsCount: number;
+}
+
+export type ShopItem =
+  | PlanetShopItem
+  | JokerShopItem
+  | ConsumableShopItem
+  | VoucherShopItem
+  | PackShopItem;
 
 export interface ShopState {
   items: ShopItem[];
   rerollCost: number;
   /** Optional single voucher slot offered alongside the items grid (PET-67 mirror). */
   voucher?: VoucherShopItem | null;
+}
+
+/** A single card inside an opening booster pack (PET-70). Generic — covers
+ *  tarot / planet / spectral / joker / playing-card depending on family. */
+export interface PackOption {
+  id: string;
+  name: string;
+  description: string;
+  /** Optional glyph the renderer falls back to per-family when absent. */
+  icon?: string;
+  /** Optional roman numeral / tag (e.g. "0", "III") for tarot. */
+  badge?: string;
+}
+
+/** A booster pack the player has bought / received and is now opening. */
+export interface OpeningPack {
+  packId: string;
+  name: string;
+  family: PackFamily;
+  picksAllowed: number;
+  options: PackOption[];
 }
 
 export interface RunStateDTO {
@@ -220,6 +271,11 @@ export interface RunStateDTO {
   tags: Tag[];
   bossEffect: BossEffect | null;
   skipsThisRun: number;
+  /** PET-70 — when status === "pack_open" this holds the contents of the
+   *  pack currently being opened; null otherwise. Backend may not emit it
+   *  until PET-70-BE — the router treats `status === "pack_open"` with a
+   *  null `openingPack` as "fall through to shop". */
+  openingPack?: OpeningPack | null;
 }
 
 export interface PreviewResponse extends RunStateDTO {

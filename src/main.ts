@@ -13,6 +13,7 @@ import {
   renderDifficultyPicker,
   renderMainMenu,
   renderOptions,
+  renderPackOpen,
   renderPlayResolution,
   renderRunOverlay,
   renderSettings,
@@ -54,6 +55,8 @@ interface ClientState {
    *  While set, the board enters "selection mode": existing toggle-card flow populates
    *  `selected`; Confirm fires useConsumable, Cancel clears this. (PET-71) */
   pendingConsumable: { instanceId: string; def: Consumable } | null;
+  /** PET-70: ids picked inside the booster-pack opener. Cleared on every status change. */
+  packPicks: Set<string>;
 }
 
 const state: ClientState = {
@@ -70,6 +73,7 @@ const state: ClientState = {
   pendingNewRun: null,
   detailId: null,
   pendingConsumable: null,
+  packPicks: new Set(),
 };
 
 function cardChipValue(rank: Rank): number {
@@ -99,6 +103,11 @@ function screenHtml(): string {
   if (!run) return renderMainMenu(state.user, null);
   if (run.status === "playing") return renderBoard(run, state.selected, state.preview, state.pendingConsumable);
   if (run.status === "selecting_blind") return renderBlindSelect(run);
+  // PET-70: pack opener screen takes over while a pack is being opened. If the backend
+  // somehow flags pack_open without sending the pack contents, fall through to shop.
+  if (run.status === "pack_open" && run.openingPack) {
+    return renderPackOpen(run, run.openingPack, state.packPicks);
+  }
   if (run.status === "shop") return renderShop(run);
   return renderRunOverlay(run); // won_run | lost_run
 }
@@ -134,6 +143,7 @@ function setRun(run: RunStateDTO): void {
   state.pendingNewRun = null;
   state.detailId = null;
   state.pendingConsumable = null;
+  state.packPicks.clear();
   render();
 }
 
@@ -182,6 +192,7 @@ function signOut(): void {
   state.anim = null;
   state.detailId = null;
   state.pendingConsumable = null;
+  state.packPicks.clear();
   render();
 }
 
@@ -490,6 +501,53 @@ async function skipBlindAction(): Promise<void> {
   }
 }
 
+// ---- booster pack opener (PET-70) ------------------------------------------
+
+/** Toggle a single pack option in/out of the local pick set. Honors picksAllowed
+ *  as a hard cap (replaces the oldest pick once full — Balatro-style). */
+function togglePackPick(itemId: string): void {
+  const run = state.run;
+  const pack = run?.openingPack;
+  if (!pack || run?.status !== "pack_open" || state.anim) return;
+  if (state.packPicks.has(itemId)) {
+    state.packPicks.delete(itemId);
+  } else if (state.packPicks.size < pack.picksAllowed) {
+    state.packPicks.add(itemId);
+  } else if (pack.picksAllowed === 1) {
+    // single-pick UX: a new tap replaces the current pick
+    state.packPicks.clear();
+    state.packPicks.add(itemId);
+  } else {
+    showToast(`Pick at most ${pack.picksAllowed}`, "info");
+    return;
+  }
+  render();
+}
+
+async function confirmPackAction(): Promise<void> {
+  const run = state.run;
+  const pack = run?.openingPack;
+  if (!state.token || !pack || state.anim) return;
+  if (state.packPicks.size !== pack.picksAllowed) {
+    showToast(`Pick ${pack.picksAllowed} first`, "error");
+    return;
+  }
+  try {
+    setRun(await api.pickFromPack(state.token, [...state.packPicks]));
+  } catch (err) {
+    showToast((err as Error).message, "error");
+  }
+}
+
+async function skipPackAction(): Promise<void> {
+  if (!state.token || state.anim) return;
+  try {
+    setRun(await api.skipPack(state.token));
+  } catch (err) {
+    showToast((err as Error).message, "error");
+  }
+}
+
 async function moveJokerAction(jokerId: string, dir: "left" | "right"): Promise<void> {
   if (!state.token || state.anim) return;
   try {
@@ -571,6 +629,9 @@ const ASYNC_ACTIONS = new Set([
   "sell-consumable",
   "skip-blind",
   "confirm-consumable",
+  // PET-70 — booster pack opener
+  "confirm-pack",
+  "skip-pack",
 ]);
 
 /** Marks a button as in-flight (disabled + spinner) for the duration of an async handler.
@@ -629,6 +690,9 @@ app.addEventListener("click", (event) => {
     case "confirm-consumable": guard(confirmPendingConsumable); break;
     case "cancel-consumable": cancelPendingConsumable(); break;
     case "skip-blind": guard(skipBlindAction); break;
+    case "pick-from-pack": if (el.dataset.itemId) togglePackPick(el.dataset.itemId); break;
+    case "confirm-pack": guard(confirmPackAction); break;
+    case "skip-pack": guard(skipPackAction); break;
     case "confirm-new-run": guard(() => { confirmNewRun(); }); break;
     case "cancel-new-run": cancelNewRun(); break;
     case "open-detail": if (el.dataset.detailId) openDetail(el.dataset.detailId); break;

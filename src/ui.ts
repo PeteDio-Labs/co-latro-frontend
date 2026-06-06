@@ -11,6 +11,8 @@ import type {
   HandType,
   JokerStep,
   JokerView,
+  OpeningPack,
+  PackFamily,
   Rank,
   RunStateDTO,
   ScoreBreakdown,
@@ -646,59 +648,105 @@ export function renderShop(run: RunStateDTO): string {
       ? BLIND_LABEL[BLIND_ORDER[run.blindIndex + 1]!]
       : `Ante ${run.ante + 1} · Small Blind`;
   const voucherSlot = shop?.voucher ? renderShopVoucherSlot(shop.voucher, run.money) : "";
+  // Slim shop HUD mirroring shop-pack.html .hud: "ANTE X/Y · NEXT <BLIND>" · Cashed-out chip · bright money on the right.
+  const cashedChip =
+    (run.pendingReward ?? 0) > 0
+      ? `<span class="cy-shop-hud__cashed">Cashed out +$${run.pendingReward}</span>`
+      : "";
   return `
   <div class="${SCREEN} gap-4 p-3 sm:p-4 md:p-6">
-    <div class="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-      <span class="font-display text-2xl font-black text-neon-lime sm:text-3xl" style="text-shadow:0 0 16px rgba(140,255,91,.6)">Blind Cleared!</span>
-      <div class="cy-panel cy-panel--lime flex flex-col px-4 py-2">
-        <span class="text-[9px] uppercase tracking-widest text-[#bfffb0]">Cash Out</span>
-        <span class="font-display text-lg font-extrabold text-neon-lime">+$${run.pendingReward ?? 0}</span>
-      </div>
-      <div class="cy-panel cy-panel--gold ml-auto flex flex-col items-center px-4 py-2">
-        <span class="text-[9px] uppercase tracking-widest text-[#ffe39a]">Money</span>
-        <span class="font-display text-lg font-extrabold text-neon-gold">$${run.money}</span>
-      </div>
+    <div class="cy-shop-hud">
+      <span class="cy-shop-hud__ctx">ANTE <b>${run.ante} / ${run.maxAnte}</b> · NEXT ${nextLabel.toUpperCase()}</span>
+      ${cashedChip}
+      <span class="cy-shop-hud__money"><span class="cy-shop-hud__moneyk">$</span><span class="cy-shop-hud__moneyv">${run.money}</span></span>
     </div>
     ${renderVouchersRail(run.vouchers)}
     ${renderTagsRail(run.tags)}
     ${renderConsumablesRow(run.consumables, run.maxConsumables)}
     ${renderJokers(run.jokers, run.maxJokers, true)}
-    <div class="text-center font-display text-[10px] uppercase tracking-[0.3em] text-neon-cyan">Shop // Jokers · Planets</div>
+    <div class="cy-shelflbl">Shop roll // rerollable</div>
     <div class="flex flex-1 items-center">
       <div class="mx-auto grid w-full max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">${items}${empty}</div>
     </div>
     ${voucherSlot}
-    <div class="flex flex-wrap items-center justify-center gap-3">
-      <button data-action="reroll" ${canReroll ? "" : "disabled"} class="cy-btn cy-btn--gold">⟲ Reroll $${rerollCost}</button>
-      <span class="border border-white/15 px-3 py-1.5 text-[11px] uppercase tracking-wide text-white/70">Next — ${nextLabel}</span>
-      <button data-action="continue" class="cy-btn cy-btn--play">Continue ▸</button>
+    <div class="cy-shop-actionbar">
+      <button data-action="reroll" ${canReroll ? "" : "disabled"} class="cy-btn cy-btn--gold cy-shop-actionbar__reroll">⟲ Reroll $${rerollCost}<small>+$1 · roll only</small></button>
+      <span class="cy-shop-actionbar__nextchip">Next <b>${nextLabel}</b></span>
+      <button data-action="continue" class="cy-btn cy-btn--play cy-shop-actionbar__continue">Continue ▸</button>
     </div>
   </div>`;
 }
 
-/** Single voucher slot rendered below the main shop grid (PET-67 scaffold; PET-76 fills it). */
+/** Single voucher slot rendered below the main shop grid (PET-67 scaffold; PET-76 fills it).
+ *  Mirrors shop-pack.html `.voucher` — gold-accent, PERMANENT tag, "survives reroll" lock note. */
 function renderShopVoucherSlot(voucher: VoucherShopItem, money: number): string {
   const afford = money >= voucher.cost;
   return `
-  <div class="mx-auto w-full max-w-3xl">
-    <div class="cy-panel cy-bd-planet flex items-center gap-3 p-3 cursor-pointer"
-         data-action="open-detail" data-detail-id="shop:${voucher.id}" tabindex="0">
-      <span class="cy-tag cy-tag--planet">Voucher</span>
-      <div class="flex flex-1 flex-col">
-        <span class="font-display text-base font-bold text-neon-cyan sm:text-lg">${escapeHtml(voucher.name)}</span>
-        <span class="text-[11px] text-white/75">${escapeHtml(voucher.description)}</span>
-      </div>
-      <span class="font-display text-lg font-extrabold text-neon-gold">$${voucher.cost}</span>
-      <button data-action="buy" data-item-id="voucher:${voucher.id}" ${afford ? "" : "disabled"} class="cy-btn cy-btn--go cy-btn--sm">Buy</button>
+  <div class="cy-voucher-slot mx-auto w-full max-w-3xl"
+       data-action="open-detail" data-detail-id="shop:${voucher.id}" tabindex="0">
+    <span class="cy-voucher-slot__idtag">PET-76</span>
+    <div class="cy-voucher-slot__body">
+      <div class="cy-voucher-slot__kicker">VOUCHER · PERMANENT</div>
+      <div class="cy-voucher-slot__name">${escapeHtml(voucher.name)}</div>
+      <div class="cy-voucher-slot__desc">${escapeHtml(voucher.description)}</div>
+      <div class="cy-voucher-slot__lock">// SURVIVES REROLL · one per shop</div>
     </div>
+    <span class="cy-voucher-slot__cost">$${voucher.cost}</span>
+    <button data-action="buy" data-item-id="voucher:${voucher.voucherId}" ${afford ? "" : "disabled"} class="cy-voucher-slot__buy">Buy</button>
   </div>`;
 }
 
-const RARITY_CLASS: Record<string, { tag: string; bd: string }> = {
-  common: { tag: "cy-tag--common", bd: "cy-bd-common" },
-  uncommon: { tag: "cy-tag--uncommon", bd: "cy-bd-uncommon" },
-  rare: { tag: "cy-tag--rare", bd: "cy-bd-rare" },
+/** Per-kind accent palette — matches shop-pack.html `.gcard.<variant>` left/top border + tag color.
+ *  Role palette: cyan=chips/common · pink=mult/rare · violet=frame/pack/arcana · gold=money/planet/voucher · lime=affordable/standard. */
+const SHOP_ACCENT: Record<string, string> = {
+  common: "cy-shop-card--common",
+  uncommon: "cy-shop-card--uncommon",
+  rare: "cy-shop-card--rare",
+  planet: "cy-shop-card--planet",
+  consumable: "cy-shop-card--consumable",
+  voucher: "cy-shop-card--voucher",
+  // pack families
+  arcana: "cy-shop-card--arcana",
+  celestial: "cy-shop-card--celestial",
+  buffoon: "cy-shop-card--buffoon",
+  spectral: "cy-shop-card--spectral",
+  standard: "cy-shop-card--standard",
 };
+
+/** Wrap a shop item card in the shared shop-card shell (mirrors shop-pack.html `.gcard`):
+ *  thin colored top border per accent, RTAG chip, name, effect, cost + Buy CTA. */
+function shopCard(opts: {
+  id: string;
+  accent: string;
+  tag: string;
+  name: string;
+  effect: string;
+  cost: number;
+  afford: boolean;
+  affordTip?: string; // tooltip when the Buy button is disabled (e.g. "Slots full")
+  buyItemId: string; // explicit item-id (vouchers use a "voucher:" prefix)
+  buyLabel?: string;
+  extra?: string; // optional small note line under effect (e.g. "Normal tier" or hand label)
+}): string {
+  const accentCls = SHOP_ACCENT[opts.accent] ?? SHOP_ACCENT.common!;
+  const buyLabel = opts.buyLabel ?? (opts.afford ? "Buy" : `$${opts.cost}`);
+  const buyAttrs = opts.afford ? "" : "disabled";
+  return `
+  <div class="cy-shop-card ${accentCls} cursor-pointer"
+       data-action="open-detail" data-detail-id="shop:${opts.id}" tabindex="0">
+    <span class="cy-shop-card__rtag">${escapeHtml(opts.tag)}</span>
+    <div class="cy-shop-card__name">${escapeHtml(opts.name)}</div>
+    <div class="cy-shop-card__effect">${escapeHtml(opts.effect)}${
+      opts.extra ? `<span class="cy-shop-card__extra">${escapeHtml(opts.extra)}</span>` : ""
+    }</div>
+    <div class="cy-shop-card__row">
+      <span class="cy-shop-card__cost">$${opts.cost}</span>
+      <button data-action="buy" data-item-id="${opts.buyItemId}" ${buyAttrs}
+        ${opts.affordTip ? `title="${escapeHtml(opts.affordTip)}"` : ""}
+        class="cy-shop-card__buy">${escapeHtml(buyLabel)}</button>
+    </div>
+  </div>`;
+}
 
 function renderShopItem(item: ShopItem, money: number, slotsFull: boolean): string {
   // The panel surface opens a detail sheet (full description + cost + Buy).
@@ -706,61 +754,160 @@ function renderShopItem(item: ShopItem, money: number, slotsFull: boolean): stri
   if (item.kind === "joker") {
     const disabled = money < item.cost || slotsFull;
     const label = slotsFull ? "Slots full" : "Buy";
-    const r = RARITY_CLASS[item.rarity] ?? RARITY_CLASS.common!;
-    return `
-    <div class="cy-panel ${r.bd} flex min-h-[150px] flex-col gap-1.5 p-3 cursor-pointer"
-         data-action="open-detail" data-detail-id="shop:${item.id}" tabindex="0">
-      <span class="cy-tag ${r.tag}">${item.rarity}</span>
-      <div class="font-display text-base font-bold leading-tight text-neon-pink neon-text sm:text-lg">${escapeHtml(item.name)}</div>
-      <div class="flex-1 text-[11px] leading-tight text-white/75">${escapeHtml(item.description)}</div>
-      <div class="flex items-center justify-between">
-        <span class="font-display text-lg font-extrabold text-neon-gold">$${item.cost}</span>
-        <button data-action="buy" data-item-id="${item.id}" ${disabled ? "disabled" : ""} class="cy-btn cy-btn--go cy-btn--sm">${label}</button>
-      </div>
-    </div>`;
+    return shopCard({
+      id: item.id,
+      accent: item.rarity,
+      tag: item.rarity.toUpperCase(),
+      name: item.name,
+      effect: item.description,
+      cost: item.cost,
+      afford: !disabled,
+      affordTip: slotsFull ? "Joker slots full" : undefined,
+      buyItemId: item.id,
+      buyLabel: label,
+    });
   }
   if (item.kind === "planet") {
-    const afford = money >= item.cost;
-    return `
-    <div class="cy-panel cy-bd-planet flex min-h-[150px] flex-col gap-1.5 p-3 cursor-pointer"
-         data-action="open-detail" data-detail-id="shop:${item.id}" tabindex="0">
-      <span class="cy-tag cy-tag--planet">Planet</span>
-      <div class="font-display text-base font-bold leading-tight text-neon-cyan sm:text-lg">${item.name}</div>
-      <div class="text-xs font-semibold text-white/85">+${item.addChips} Chips · +${item.addMult} Mult</div>
-      <div class="flex-1 text-[10px] text-white/60">${HAND_NAME[item.hand]} · Lv ${item.targetLevel - 1} → ${item.targetLevel}</div>
-      <div class="flex items-center justify-between">
-        <span class="font-display text-lg font-extrabold text-neon-gold">$${item.cost}</span>
-        <button data-action="buy" data-item-id="${item.id}" ${afford ? "" : "disabled"} class="cy-btn cy-btn--go cy-btn--sm">Buy</button>
-      </div>
-    </div>`;
+    return shopCard({
+      id: item.id,
+      accent: "planet",
+      tag: "PLANET",
+      name: item.name,
+      effect: `+${item.addChips} Chips · +${item.addMult} Mult`,
+      extra: `${HAND_NAME[item.hand]} · Lv ${item.targetLevel - 1} → ${item.targetLevel}`,
+      cost: item.cost,
+      afford: money >= item.cost,
+      buyItemId: item.id,
+    });
   }
   if (item.kind === "consumable") {
-    const afford = money >= item.cost;
-    return `
-    <div class="cy-panel cy-bd-planet flex min-h-[150px] flex-col gap-1.5 p-3 cursor-pointer"
-         data-action="open-detail" data-detail-id="shop:${item.id}" tabindex="0">
-      <span class="cy-tag cy-tag--planet">${item.consumableKind}</span>
-      <div class="font-display text-base font-bold leading-tight text-neon-cyan sm:text-lg">${escapeHtml(item.name)}</div>
-      <div class="flex-1 text-[11px] leading-tight text-white/75">${escapeHtml(item.description)}</div>
-      <div class="flex items-center justify-between">
-        <span class="font-display text-lg font-extrabold text-neon-gold">$${item.cost}</span>
-        <button data-action="buy" data-item-id="${item.id}" ${afford ? "" : "disabled"} class="cy-btn cy-btn--go cy-btn--sm">Buy</button>
-      </div>
-    </div>`;
+    return shopCard({
+      id: item.id,
+      accent: "consumable",
+      tag: item.consumableKind.toUpperCase(),
+      name: item.name,
+      effect: item.description,
+      cost: item.cost,
+      afford: money >= item.cost,
+      buyItemId: item.id,
+    });
+  }
+  if (item.kind === "pack") {
+    return shopCard({
+      id: item.id,
+      accent: item.family, // arcana / celestial / buffoon / spectral / standard
+      tag: item.family.toUpperCase(),
+      name: item.name,
+      effect: `Choose ${item.picksAllowed} of ${item.optionsCount}`,
+      extra: item.description,
+      cost: item.cost,
+      afford: money >= item.cost,
+      buyItemId: item.id,
+    });
   }
   // voucher (in-grid variant — the dedicated slot below the grid is preferred, but a shop may emit one here)
-  const afford = money >= item.cost;
+  return shopCard({
+    id: item.id,
+    accent: "voucher",
+    tag: "VOUCHER",
+    name: item.name,
+    effect: item.description,
+    cost: item.cost,
+    afford: money >= item.cost,
+    buyItemId: `voucher:${item.voucherId}`,
+  });
+}
+
+// ---- pack open (PET-70) ----------------------------------------------------
+
+/** Booster-pack opener: choose N of M overlay on top of a dimmed shop background.
+ *  Mirrors ante-pack.html Screen 3 (.overlay + .fan + .pc) and uses the family-accent
+ *  palette from shop-pack.html (arcana=violet · celestial=gold · etc.). */
+export function renderPackOpen(run: RunStateDTO, pack: OpeningPack, picks: Set<string>): string {
+  const familyClass = `cy-pack--${pack.family}`;
+  const canConfirm = picks.size === pack.picksAllowed;
+  const optionsHtml = pack.options
+    .map((opt, i) => {
+      const selected = picks.has(opt.id);
+      const badge = opt.badge ?? toRoman(i);
+      const icon = opt.icon ?? defaultPackIcon(pack.family);
+      return `
+      <button data-action="pick-from-pack" data-item-id="${escapeHtml(opt.id)}"
+        class="cy-pack__pc ${selected ? "cy-pack__pc--sel" : ""}"
+        aria-pressed="${selected}">
+        <span class="cy-pack__pc-num">${escapeHtml(badge)}</span>
+        <span class="cy-pack__pc-icon" aria-hidden="true">${icon}</span>
+        <span class="cy-pack__pc-name">${escapeHtml(opt.name)}</span>
+        <span class="cy-pack__pc-eff">${escapeHtml(opt.description)}</span>
+      </button>`;
+    })
+    .join("");
+
+  // dimmed shop "behind" — purely decorative; pulls the player into the overlay.
+  const behindItems = (run.shop?.items ?? [])
+    .slice(0, 3)
+    .map(
+      (it) => `<div class="cy-pack__behind-item"><div class="cy-pack__behind-nm">${escapeHtml(
+        it.kind === "joker" || it.kind === "planet" || it.kind === "voucher" || it.kind === "consumable" || it.kind === "pack" ? it.name : "",
+      )}</div></div>`,
+    )
+    .join("");
+
+  const confirmLabel =
+    pack.picksAllowed === 1
+      ? `Take ${picks.size === 1 ? picksLabel(pack, picks) : "selection"} ▸`
+      : `Confirm ${picks.size}/${pack.picksAllowed} ▸`;
+
   return `
-  <div class="cy-panel cy-bd-planet flex min-h-[150px] flex-col gap-1.5 p-3 cursor-pointer"
-       data-action="open-detail" data-detail-id="shop:${item.id}" tabindex="0">
-    <span class="cy-tag cy-tag--planet">Voucher</span>
-    <div class="font-display text-base font-bold leading-tight text-neon-cyan sm:text-lg">${escapeHtml(item.name)}</div>
-    <div class="flex-1 text-[11px] leading-tight text-white/75">${escapeHtml(item.description)}</div>
-    <div class="flex items-center justify-between">
-      <span class="font-display text-lg font-extrabold text-neon-gold">$${item.cost}</span>
-      <button data-action="buy" data-item-id="voucher:${item.voucherId}" ${afford ? "" : "disabled"} class="cy-btn cy-btn--go cy-btn--sm">Buy</button>
+  <div class="${SCREEN} ${familyClass} gap-0 p-0">
+    <div class="cy-shop-hud">
+      <span class="cy-shop-hud__ctx">Shop // opening booster pack</span>
+      <span class="cy-shop-hud__money"><span class="cy-shop-hud__moneyk">$</span><span class="cy-shop-hud__moneyv">${run.money}</span></span>
+    </div>
+    <div class="cy-pack-stage">
+      <div class="cy-pack__behind" aria-hidden="true">${behindItems}</div>
+      <div class="cy-pack__dim" aria-hidden="true"></div>
+      <div class="cy-pack__overlay" role="dialog" aria-modal="true" aria-label="${escapeHtml(pack.name)}">
+        <div class="cy-pack__ohdr">
+          <span class="cy-pack__ofam">${pack.family.toUpperCase()}</span>
+          <span class="cy-pack__otitle">${escapeHtml(pack.name.toUpperCase())}</span>
+        </div>
+        <div class="cy-pack__opick">CHOOSE ${pack.picksAllowed} OF ${pack.options.length}</div>
+        <div class="cy-pack__fan">${optionsHtml}</div>
+        <div class="cy-pack__footer">
+          <button data-action="confirm-pack" ${canConfirm ? "" : "disabled"} class="cy-btn cy-btn--play">${confirmLabel}</button>
+          <button data-action="skip-pack" class="cy-btn cy-btn--ghost">Skip Pack</button>
+        </div>
+      </div>
     </div>
   </div>`;
+}
+
+function picksLabel(pack: OpeningPack, picks: Set<string>): string {
+  const id = [...picks][0];
+  const opt = pack.options.find((o) => o.id === id);
+  return opt ? opt.name : "selection";
+}
+
+const ROMAN: string[] = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+function toRoman(i: number): string {
+  return ROMAN[i] ?? String(i);
+}
+
+/** Default glyph per pack family — overridden by `option.icon` when set. */
+function defaultPackIcon(family: PackFamily): string {
+  switch (family) {
+    case "arcana":
+      return "✦";
+    case "celestial":
+      return "☀";
+    case "buffoon":
+      return "★";
+    case "spectral":
+      return "◈";
+    case "standard":
+      return "♠";
+  }
 }
 
 // ---- deck peek -------------------------------------------------------------
@@ -927,6 +1074,18 @@ export function renderDetailFor(detailId: string, run: RunStateDTO | null): stri
         title: it.name,
         body: `<p class="text-[11px] uppercase tracking-widest text-neon-gold">${it.consumableKind}</p>
                <p class="mt-1">${escapeHtml(it.description)}</p>`,
+        actions: [
+          { action: "buy", label: `Buy · $${it.cost}`, variant: "go", data: { "item-id": it.id }, disabled: !afford },
+        ],
+      });
+    }
+    if (it.kind === "pack") {
+      const afford = run.money >= it.cost;
+      return renderDetailSheet({
+        title: it.name,
+        body: `<p class="text-[11px] uppercase tracking-widest text-neon-violet">${it.family} pack</p>
+               <p class="mt-1">Choose <span class="text-neon-lime">${it.picksAllowed}</span> of <span class="text-neon-cyan">${it.optionsCount}</span></p>
+               <p class="mt-1 text-white/70">${escapeHtml(it.description)}</p>`,
         actions: [
           { action: "buy", label: `Buy · $${it.cost}`, variant: "go", data: { "item-id": it.id }, disabled: !afford },
         ],
