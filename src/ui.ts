@@ -280,12 +280,13 @@ function jokerCard(j: JokerView, sellable: boolean, index: number, count: number
          <button data-action="move-joker-right" data-joker-id="${j.id}" ${index === count - 1 ? "disabled" : ""} class="cy-mini">▶</button>
        </div>`
     : "";
-  // The whole chip body opens a detail sheet on tap; controls keep their own actions
-  // via event.target precedence. Desktop pointers also get a compact hover tooltip.
+  // Idle bob (PET-77) staggered per index + detail-sheet hook on tap (PET-85).
+  const bobDelay = `--bob-delay:${(index * 0.35).toFixed(2)}s`;
   return `
-  <div class="cy-joker flex min-h-[4.5rem] w-24 shrink-0 flex-col p-2 sm:w-28"
+  <div class="cy-joker joker-idle-bob flex min-h-[4.5rem] w-24 shrink-0 flex-col p-2 sm:w-28"
        data-action="open-detail" data-detail-id="joker:${j.id}" tabindex="0"
-       title="${escapeHtml(j.description)}">
+       title="${escapeHtml(j.description)}" style="${bobDelay}">
+
     <div class="font-display text-[11px] font-bold leading-tight text-neon-pink neon-text">${escapeHtml(j.name)}</div>
     <div class="text-[9px] leading-tight text-white/70">${escapeHtml(j.description)}</div>
     ${controls}
@@ -304,7 +305,9 @@ export function renderBoard(
   preview: ScoreBreakdown | null,
 ): string {
   const scoring = new Set(preview?.scoringCardIds ?? []);
-  const cardsHtml = run.hand.map((c) => renderCard(c, selected.has(c.id), scoring.has(c.id))).join("");
+  const cardsHtml = run.hand
+    .map((c, i) => renderCard(c, selected.has(c.id), scoring.has(c.id), i))
+    .join("");
 
   const canPlay = selected.size >= 1 && selected.size <= run.maxSelect && run.status === "playing";
   const canDiscard = canPlay && run.discardsRemaining > 0;
@@ -415,10 +418,11 @@ function cardColor(card: Card): string {
   return card.suit === "hearts" || card.suit === "diamonds" ? "cy-card--red" : "cy-card--black";
 }
 
-function renderCard(card: Card, selected: boolean, isScoring: boolean): string {
+function renderCard(card: Card, selected: boolean, isScoring: boolean, index = 0): string {
   const state = isScoring ? "cy-card--scoring" : selected ? "cy-card--sel" : "";
-  // Primary tap = select; the small "i" corner opens a detail sheet (rank/suit; modifiers via PET-75).
-  return `<button data-action="toggle-card" data-card-id="${card.id}" class="cy-card ${cardColor(card)} ${state}">${cardInner(card)}<span class="cy-card__info" data-action="open-detail" data-detail-id="card:${card.id}" aria-label="Card details" role="button" tabindex="0">i</span></button>`;
+  // Deal-in stagger (PET-77) + info-button for detail sheet (PET-85).
+  const delay = `--deal-delay:${index * 55}ms`;
+  return `<button data-action="toggle-card" data-card-id="${card.id}" class="cy-card card-deal card-hover-lift ${cardColor(card)} ${state}" style="${delay}">${cardInner(card)}<span class="cy-card__info" data-action="open-detail" data-detail-id="card:${card.id}" aria-label="Card details" role="button" tabindex="0">i</span></button>`;
 }
 
 // ---- play resolution (score animation) -------------------------------------
@@ -481,7 +485,7 @@ function jokerStepBadge(step: JokerStep): string {
 
 function renderPlayCard(card: Card, scored: boolean, popped: boolean): string {
   const state = popped ? "cy-card--pop" : scored ? "" : "cy-card--dim";
-  return `<div class="cy-card ${cardColor(card)} ${state}">${cardInner(card)}</div>`;
+  return `<div class="cy-card card-play-pop ${cardColor(card)} ${state}">${cardInner(card)}</div>`;
 }
 
 // ---- shop ------------------------------------------------------------------

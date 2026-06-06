@@ -1,0 +1,224 @@
+/* =====================================================================
+   motion.css — Co-latro Cyber-HUD motion vocabulary
+   ---------------------------------------------------------------------
+   Lightweight, CSS-only animations layered on top of the static
+   .cy-card / .cy-joker visuals in styles.css. Timings are CSS-variable
+   driven so individual elements (or `prefers-reduced-motion`) can tune
+   them without touching the keyframes.
+
+   Vocabulary
+   ----------
+   .card-deal        deal-in: translate from above + fade. Stagger via
+                     inline `--deal-delay` per card (e.g. style="--deal-delay:80ms").
+   .card-hover-lift  hover/focus lift + glow (additive; works on .cy-card
+                     and on the card chips used elsewhere). Hover lift is
+                     suppressed when the card is also .cy-card--sel (the
+                     selected card already lifts via styles.css).
+   .card-play-pop    score-time scale pulse + neon flash. Triggered by
+                     `cy-card--scoring` / `cy-card--pop` during the
+                     play-resolution animation in main.ts.
+   .joker-idle-bob   gentle, infinite Y bob applied to .cy-joker so the
+                     row feels alive between actions. The firing joker
+                     (`cy-joker--fire`) takes over with its own pulse.
+   .card-foil        animated silver/holo conic shimmer (PET-75 edition).
+   .card-holo        rainbow hue-rotate ripple (PET-75 edition).
+   .card-poly        polychrome shifting gradient sheen (PET-75 edition).
+
+   Reduced motion
+   --------------
+   `@media (prefers-reduced-motion: reduce)` flattens every animation to
+   an instant transition: cards appear without dealing in, jokers stop
+   bobbing, shimmer shaders freeze. Selection / hover lifts are kept
+   (they're meaningful affordances, not decorative motion) but their
+   transitions are zeroed out.
+
+   Note: edition shimmer classes (.card-foil/.card-holo/.card-poly) are
+   intentionally exposed here ahead of PET-75 so the renderer can apply
+   them once edition state lands; no edition rendering ships with PET-77.
+   ===================================================================== */
+
+:root {
+  --motion-deal-duration: 360ms;
+  --motion-deal-distance: -28px;
+  --motion-hover-lift: -6px;
+  --motion-pop-duration: 420ms;
+  --motion-joker-bob-duration: 3.2s;
+  --motion-joker-bob-distance: -3px;
+  --motion-shimmer-duration: 2.6s;
+}
+
+/* ---- deal-in ----------------------------------------------------- */
+.card-deal {
+  animation: card-deal var(--motion-deal-duration) cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--deal-delay, 0ms);
+  will-change: transform, opacity;
+}
+
+@keyframes card-deal {
+  0% {
+    transform: translateY(var(--motion-deal-distance)) rotate(-2deg);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) rotate(0);
+    opacity: 1;
+  }
+}
+
+/* ---- hover lift -------------------------------------------------- */
+/* Additive to the .cy-card transition already declared in styles.css.
+   Suppressed when the card is in the selected state — that state owns
+   the lift visual so we don't compound translations. */
+.card-hover-lift:not(.cy-card--sel):not(:disabled):hover,
+.card-hover-lift:not(.cy-card--sel):not(:disabled):focus-visible {
+  transform: translateY(var(--motion-hover-lift));
+  filter: brightness(1.08);
+}
+
+/* ---- play pop ---------------------------------------------------- */
+/* Triggered when a card enters the scoring/popped state during the play
+   resolution. The base .cy-card--scoring / .cy-card--pop classes in
+   styles.css already shift the card up + recolor the border; this layer
+   adds a brief scale pulse + flash on top. */
+.card-play-pop.cy-card--scoring,
+.card-play-pop.cy-card--pop {
+  animation: card-play-pop var(--motion-pop-duration) ease-out;
+}
+
+@keyframes card-play-pop {
+  0% { transform: translateY(-14px) scale(1); }
+  35% {
+    transform: translateY(-22px) scale(1.12);
+    box-shadow:
+      0 0 0 1px var(--color-neon-pink),
+      0 0 32px rgba(255, 46, 151, 0.85),
+      0 0 64px rgba(255, 46, 151, 0.45);
+  }
+  100% { transform: translateY(-14px) scale(1); }
+}
+
+/* ---- joker idle bob --------------------------------------------- */
+/* Subtle infinite Y bob. Stagger per-joker by inline `--bob-delay`. */
+.joker-idle-bob:not(.cy-joker--fire) {
+  animation: joker-idle-bob var(--motion-joker-bob-duration) ease-in-out infinite;
+  animation-delay: var(--bob-delay, 0s);
+}
+
+@keyframes joker-idle-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(var(--motion-joker-bob-distance)); }
+}
+
+/* ---- edition shimmer shaders (CSS-only; PET-75 will toggle) ------ */
+/* All three are absolutely-positioned overlays via ::after so the host
+   element keeps its existing background/border. Hosts must be position-
+   relative (.cy-card and .cy-joker already are) and have overflow-hidden
+   visuals via clip-path; we mask the overlay to the same shape with
+   `border-radius: inherit`. */
+.card-foil,
+.card-holo,
+.card-poly {
+  position: relative;
+  isolation: isolate;
+}
+.card-foil::after,
+.card-holo::after,
+.card-poly::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  z-index: 1;
+}
+
+/* foil — cool silver/cyan sheen sweeping diagonally */
+.card-foil::after {
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(220, 240, 255, 0.55) 48%,
+    rgba(0, 229, 255, 0.35) 52%,
+    transparent 70%
+  );
+  background-size: 220% 220%;
+  animation: shimmer-foil var(--motion-shimmer-duration) linear infinite;
+  opacity: 0.7;
+}
+
+@keyframes shimmer-foil {
+  0% { background-position: 200% 0%; }
+  100% { background-position: -100% 0%; }
+}
+
+/* holo — rainbow conic with hue-rotate */
+.card-holo::after {
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 46, 151, 0.45),
+    rgba(255, 197, 61, 0.45),
+    rgba(140, 255, 91, 0.45),
+    rgba(0, 229, 255, 0.45),
+    rgba(176, 38, 255, 0.45),
+    rgba(255, 46, 151, 0.45)
+  );
+  opacity: 0.45;
+  animation: shimmer-holo calc(var(--motion-shimmer-duration) * 1.6) linear infinite;
+}
+
+@keyframes shimmer-holo {
+  0% { filter: hue-rotate(0deg); transform: rotate(0deg); }
+  100% { filter: hue-rotate(360deg); transform: rotate(360deg); }
+}
+
+/* poly — polychrome shifting linear gradient */
+.card-poly::after {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 46, 151, 0.4),
+    rgba(176, 38, 255, 0.4),
+    rgba(0, 229, 255, 0.4),
+    rgba(140, 255, 91, 0.4),
+    rgba(255, 197, 61, 0.4),
+    rgba(255, 46, 151, 0.4)
+  );
+  background-size: 300% 300%;
+  opacity: 0.55;
+  animation: shimmer-poly calc(var(--motion-shimmer-duration) * 1.2) ease-in-out infinite;
+}
+
+@keyframes shimmer-poly {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ---- reduced motion --------------------------------------------- */
+/* Flatten every decorative animation; keep selection lift (it's an
+   affordance, not decoration) but zero out its transition. */
+@media (prefers-reduced-motion: reduce) {
+  .card-deal,
+  .card-play-pop.cy-card--scoring,
+  .card-play-pop.cy-card--pop,
+  .joker-idle-bob:not(.cy-joker--fire),
+  .card-foil::after,
+  .card-holo::after,
+  .card-poly::after {
+    animation: none !important;
+  }
+  .card-deal {
+    opacity: 1;
+    transform: none;
+  }
+  .card-hover-lift:not(.cy-card--sel):not(:disabled):hover,
+  .card-hover-lift:not(.cy-card--sel):not(:disabled):focus-visible {
+    transform: none;
+    filter: brightness(1.08);
+  }
+  .cy-card {
+    transition: none;
+  }
+}
