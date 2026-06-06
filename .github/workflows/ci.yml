@@ -34,6 +34,11 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
+      # PET-66 — vitest gate (unit). Playwright E2E (e2e/) is scaffolded but not yet wired
+      # into CI: it needs the backend + nginx stack stood up in-job, deferred to a follow-up.
+      - name: Test (vitest)
+        run: bun run test
+
       - name: Build
         run: bun run build
 
