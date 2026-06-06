@@ -102,3 +102,17 @@ export const sellConsumable = (token: string, instanceId: string) =>
 
 export const skipBlind = (token: string) =>
   request<RunStateDTO>("/api/run/skip", { method: "POST", token });
+
+// ---- booster pack opener (PET-70) — backend may 400 until PET-70-BE ships --
+
+/** Submit the chosen N items from the currently-opening pack. */
+export const pickFromPack = (token: string, itemIds: string[]) =>
+  request<RunStateDTO>("/api/run/pack/pick", {
+    method: "POST",
+    token,
+    body: { itemIds },
+  });
+
+/** Skip the open pack (forfeit picks, return to shop). */
+export const skipPack = (token: string) =>
+  request<RunStateDTO>("/api/run/pack/skip", { method: "POST", token });
