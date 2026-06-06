@@ -214,6 +214,38 @@ body::before {
 .cy-card--scoring, .cy-card--pop { transform: translateY(-14px); border-color: var(--color-neon-pink); box-shadow: 0 0 0 1px var(--color-neon-pink), 0 0 22px rgba(255, 46, 151, 0.55); }
 .cy-card--dim { opacity: 0.4; }
 
+/* face-down card (PET-83) — boss-effect card-back. Violet gradient + cyan scanline
+   overlay + neon "?" glyph. Player can still select; visuals only. Iterating welcome. */
+.cy-card--facedown {
+  border-color: var(--color-neon-violet);
+  background:
+    linear-gradient(165deg, #2a0a4a, #100425 60%, #07021a);
+  box-shadow: 0 0 10px rgba(176, 38, 255, 0.35), inset 0 0 18px rgba(0, 0, 0, 0.7);
+}
+.cy-card--facedown .cy-card__back {
+  position: absolute;
+  inset: 4px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  border-radius: 4px;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0, 229, 255, 0.12) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, rgba(176, 38, 255, 0.1) 0 1px, transparent 1px 6px);
+  box-shadow: inset 0 0 14px rgba(176, 38, 255, 0.45);
+}
+.cy-card--facedown .cy-card__back-q {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.1rem, 4.5vw, 2rem);
+  color: var(--color-neon-cyan);
+  text-shadow:
+    0 0 6px var(--color-neon-cyan),
+    0 0 14px rgba(0, 229, 255, 0.6),
+    0 0 24px var(--color-neon-violet);
+}
+/* selected face-down still pops lime (consistent with other cards) */
+.cy-card--facedown.cy-card--sel { border-color: var(--color-neon-lime); }
+
 /* chips × mult scoreboard */
 .cy-chip, .cy-mult {
   display: flex; flex-direction: column; align-items: center;

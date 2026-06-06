@@ -554,6 +554,11 @@ function renderPreviewLine(selectedCount: number, preview: ScoreBreakdown | null
 }
 
 function cardInner(card: Card): string {
+  if (card.faceDown) {
+    // Face-down card back (PET-83). No rank/suit/modifier badges leak through —
+    // the visual is a violet card-back tile with a neon "?" glyph.
+    return `<span class="cy-card__back" aria-hidden="true"><span class="cy-card__back-q">?</span></span>`;
+  }
   const rank = RANK_LABEL[card.rank];
   const suit = SUIT_SYMBOL[card.suit];
   return `<span class="r">${rank}</span><span class="p">${suit}</span><span class="r b">${rank}</span>${cardBadges(card)}`;
@@ -587,7 +592,13 @@ function renderCard(card: Card, selected: boolean, isScoring: boolean, index = 0
   const state = isScoring ? "cy-card--scoring" : selected ? "cy-card--sel" : "";
   // Deal-in stagger (PET-77) + info-button for detail sheet (PET-85).
   const delay = `--deal-delay:${index * 55}ms`;
-  return `<button data-action="toggle-card" data-card-id="${card.id}" class="cy-card card-deal card-hover-lift${cardEditionShimmer(card)} ${cardColor(card)} ${state}" style="${delay}">${cardInner(card)}<span class="cy-card__info" data-action="open-detail" data-detail-id="card:${card.id}" aria-label="Card details" role="button" tabindex="0">i</span></button>`;
+  // Face-down (PET-83): still selectable (player can play a face-down card), but visually
+  // marked as a card-back. Skip the edition shimmer alias so it can't leak rank/edition info.
+  const faceDown = card.faceDown === true;
+  const fd = faceDown ? " cy-card--facedown" : "";
+  const shimmer = faceDown ? "" : cardEditionShimmer(card);
+  const tooltip = faceDown ? ' title="Face-down (boss effect)"' : "";
+  return `<button data-action="toggle-card" data-card-id="${card.id}" class="cy-card card-deal card-hover-lift${shimmer} ${cardColor(card)} ${state}${fd}" style="${delay}"${tooltip}>${cardInner(card)}<span class="cy-card__info" data-action="open-detail" data-detail-id="card:${card.id}" aria-label="Card details" role="button" tabindex="0">i</span></button>`;
 }
 
 // ---- play resolution (score animation) -------------------------------------
@@ -656,7 +667,11 @@ function jokerStepBadge(step: JokerStep): string {
 
 function renderPlayCard(card: Card, scored: boolean, popped: boolean): string {
   const state = popped ? "cy-card--pop" : scored ? "" : "cy-card--dim";
-  return `<div class="cy-card card-play-pop ${cardColor(card)} ${state}">${cardInner(card)}</div>`;
+  // PET-83: backend reveals face-down cards at score time (clears the faceDown flag in
+  // lastPlay). Defensively strip the flag here so the score animation never renders a
+  // card-back — if something slipped through, the reveal still happens visually.
+  const revealed: Card = card.faceDown ? { ...card, faceDown: false } : card;
+  return `<div class="cy-card card-play-pop ${cardColor(revealed)} ${state}">${cardInner(revealed)}</div>`;
 }
 
 // ---- shop ------------------------------------------------------------------
@@ -1058,6 +1073,14 @@ export function renderDetailFor(detailId: string, run: RunStateDTO | null): stri
   if (kind === "card") {
     const c = run.hand.find((x) => x.id === id);
     if (!c) return null;
+    // Face-down (PET-83) — hide rank/suit/modifier info; revealed at score time.
+    if (c.faceDown) {
+      return renderDetailSheet({
+        title: "Face-down",
+        body: `<p class="text-[11px] uppercase tracking-widest text-neon-violet">Boss effect</p>
+               <p class="mt-1">Face-down — revealed at score time.</p>`,
+      });
+    }
     const suitName = c.suit.charAt(0).toUpperCase() + c.suit.slice(1);
     return renderDetailSheet({
       title: `${RANK_LABEL[c.rank]}${SUIT_SYMBOL[c.suit]} — ${suitName}`,
