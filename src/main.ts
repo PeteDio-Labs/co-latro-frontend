@@ -8,6 +8,7 @@ import {
   renderConfirmDialog,
   renderDeckPeek,
   renderDeckSelect,
+  renderDetailFor,
   renderDifficultyPicker,
   renderMainMenu,
   renderOptions,
@@ -46,6 +47,7 @@ interface ClientState {
   deckPeek: DeckPeekDTO | null;
   anim: AnimState | null;
   pendingNewRun: { difficulty: Difficulty } | null;
+  detailId: string | null;
 }
 
 const state: ClientState = {
@@ -60,6 +62,7 @@ const state: ClientState = {
   deckPeek: null,
   anim: null,
   pendingNewRun: null,
+  detailId: null,
 };
 
 function cardChipValue(rank: Rank): number {
@@ -105,6 +108,11 @@ function render(): void {
       "Start New Run",
     );
   }
+  if (state.detailId && state.user && !state.anim) {
+    const sheet = renderDetailFor(state.detailId, state.run);
+    if (sheet) html += sheet;
+    else state.detailId = null; // target vanished (e.g. after sell/buy) — drop silently
+  }
   app.innerHTML = html;
   document.querySelector<HTMLInputElement>("#name-input")?.focus();
 }
@@ -117,6 +125,7 @@ function setRun(run: RunStateDTO): void {
   state.deckPeek = null;
   state.anim = null;
   state.pendingNewRun = null;
+  state.detailId = null;
   render();
 }
 
@@ -163,6 +172,7 @@ function signOut(): void {
   state.menuView = null;
   state.deckPeek = null;
   state.anim = null;
+  state.detailId = null;
   render();
 }
 
@@ -439,6 +449,20 @@ function resume(): void {
   render();
 }
 
+// ---- progressive disclosure (detail sheet / tooltip) ----
+
+function openDetail(detailId: string): void {
+  if (state.anim) return;
+  state.detailId = detailId;
+  render();
+}
+
+function closeDetail(): void {
+  if (!state.detailId) return;
+  state.detailId = null;
+  render();
+}
+
 // ---- events ----
 
 app.addEventListener("click", (event) => {
@@ -470,13 +494,23 @@ app.addEventListener("click", (event) => {
     case "move-joker-right": if (el.dataset.jokerId) void moveJokerAction(el.dataset.jokerId, "right"); break;
     case "confirm-new-run": confirmNewRun(); break;
     case "cancel-new-run": cancelNewRun(); break;
-    // "peek-noop" / "confirm-noop": clicks inside a modal panel — do nothing
+    case "open-detail": if (el.dataset.detailId) openDetail(el.dataset.detailId); break;
+    case "close-detail": closeDetail(); break;
+    // "peek-noop" / "confirm-noop" / "sheet-noop": clicks inside a modal panel — do nothing
   }
 });
 
 app.addEventListener("keydown", (event) => {
   if (event.key === "Enter" && (event.target as HTMLElement).id === "name-input") {
     void signIn();
+  }
+});
+
+// Esc dismisses the detail sheet (keyboard parity with outside-click on the scrim).
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && state.detailId) {
+    event.preventDefault();
+    closeDetail();
   }
 });
 

@@ -280,11 +280,19 @@ function jokerCard(j: JokerView, sellable: boolean, index: number, count: number
          <button data-action="move-joker-right" data-joker-id="${j.id}" ${index === count - 1 ? "disabled" : ""} class="cy-mini">▶</button>
        </div>`
     : "";
+  // The whole chip body opens a detail sheet on tap; controls keep their own actions
+  // via event.target precedence. Desktop pointers also get a compact hover tooltip.
   return `
-  <div class="cy-joker flex min-h-[4.5rem] w-24 shrink-0 flex-col p-2 sm:w-28" title="${escapeHtml(j.description)}">
+  <div class="cy-joker flex min-h-[4.5rem] w-24 shrink-0 flex-col p-2 sm:w-28"
+       data-action="open-detail" data-detail-id="joker:${j.id}" tabindex="0"
+       title="${escapeHtml(j.description)}">
     <div class="font-display text-[11px] font-bold leading-tight text-neon-pink neon-text">${escapeHtml(j.name)}</div>
     <div class="text-[9px] leading-tight text-white/70">${escapeHtml(j.description)}</div>
     ${controls}
+    <div class="cy-tip" aria-hidden="true">
+      <div class="cy-tip__title">${escapeHtml(j.name)}</div>
+      <div class="cy-tip__body">${escapeHtml(j.description)}</div>
+    </div>
   </div>`;
 }
 
@@ -409,7 +417,8 @@ function cardColor(card: Card): string {
 
 function renderCard(card: Card, selected: boolean, isScoring: boolean): string {
   const state = isScoring ? "cy-card--scoring" : selected ? "cy-card--sel" : "";
-  return `<button data-action="toggle-card" data-card-id="${card.id}" class="cy-card ${cardColor(card)} ${state}">${cardInner(card)}</button>`;
+  // Primary tap = select; the small "i" corner opens a detail sheet (rank/suit; modifiers via PET-75).
+  return `<button data-action="toggle-card" data-card-id="${card.id}" class="cy-card ${cardColor(card)} ${state}">${cardInner(card)}<span class="cy-card__info" data-action="open-detail" data-detail-id="card:${card.id}" aria-label="Card details" role="button" tabindex="0">i</span></button>`;
 }
 
 // ---- play resolution (score animation) -------------------------------------
@@ -521,12 +530,15 @@ const RARITY_CLASS: Record<string, { tag: string; bd: string }> = {
 };
 
 function renderShopItem(item: ShopItem, money: number, slotsFull: boolean): string {
+  // The panel surface opens a detail sheet (full description + cost + Buy).
+  // The inline Buy button keeps working — click handler on Buy fires first via closest("[data-action]").
   if (item.kind === "joker") {
     const disabled = money < item.cost || slotsFull;
     const label = slotsFull ? "Slots full" : "Buy";
     const r = RARITY_CLASS[item.rarity] ?? RARITY_CLASS.common!;
     return `
-    <div class="cy-panel ${r.bd} flex min-h-[150px] flex-col gap-1.5 p-3">
+    <div class="cy-panel ${r.bd} flex min-h-[150px] flex-col gap-1.5 p-3 cursor-pointer"
+         data-action="open-detail" data-detail-id="shop:${item.id}" tabindex="0">
       <span class="cy-tag ${r.tag}">${item.rarity}</span>
       <div class="font-display text-base font-bold leading-tight text-neon-pink neon-text sm:text-lg">${escapeHtml(item.name)}</div>
       <div class="flex-1 text-[11px] leading-tight text-white/75">${escapeHtml(item.description)}</div>
@@ -538,7 +550,8 @@ function renderShopItem(item: ShopItem, money: number, slotsFull: boolean): stri
   }
   const afford = money >= item.cost;
   return `
-  <div class="cy-panel cy-bd-planet flex min-h-[150px] flex-col gap-1.5 p-3">
+  <div class="cy-panel cy-bd-planet flex min-h-[150px] flex-col gap-1.5 p-3 cursor-pointer"
+       data-action="open-detail" data-detail-id="shop:${item.id}" tabindex="0">
     <span class="cy-tag cy-tag--planet">Planet</span>
     <div class="font-display text-base font-bold leading-tight text-neon-cyan sm:text-lg">${item.name}</div>
     <div class="text-xs font-semibold text-white/85">+${item.addChips} Chips · +${item.addMult} Mult</div>
@@ -614,6 +627,98 @@ export function renderConfirmDialog(
       </div>
     </div>
   </div>`;
+}
+
+// ---- detail sheet (progressive disclosure) --------------------------------
+
+export interface DetailAction {
+  action: string; // data-action value
+  label: string;
+  variant?: "play" | "go" | "ghost" | "gold";
+  data?: Record<string, string>; // extra data-* attrs (e.g. data-joker-id)
+  disabled?: boolean;
+}
+
+/** Reusable bottom-sheet (mobile) / right-docked panel (desktop ≥ 768px).
+ *  Tap outside or Esc dismisses (wired in main.ts via close-detail). */
+export function renderDetailSheet(opts: { title: string; body: string; actions?: DetailAction[] }): string {
+  const actionsHtml = (opts.actions ?? [])
+    .map((a) => {
+      const variant = a.variant ? `cy-btn--${a.variant}` : "cy-btn--ghost";
+      const extra = a.data
+        ? Object.entries(a.data)
+            .map(([k, v]) => `data-${k}="${escapeHtml(v)}"`)
+            .join(" ")
+        : "";
+      return `<button data-action="${a.action}" ${extra} ${a.disabled ? "disabled" : ""} class="cy-btn ${variant} cy-btn--sm">${escapeHtml(a.label)}</button>`;
+    })
+    .join("");
+  return `
+  <div class="cy-sheet-scrim" data-action="close-detail">
+    <div class="cy-sheet" role="dialog" aria-modal="true" aria-label="${escapeHtml(opts.title)}" data-action="sheet-noop">
+      <div class="cy-sheet__grab"></div>
+      <h3 class="cy-sheet__title">${escapeHtml(opts.title)}</h3>
+      <div class="cy-sheet__body">${opts.body}</div>
+      <div class="cy-sheet__actions">
+        ${actionsHtml}
+        <button data-action="close-detail" class="cy-sheet__close">Close</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/** Build the detail sheet for `<kind>:<id>` against the active run. Returns null if not found. */
+export function renderDetailFor(detailId: string, run: RunStateDTO | null): string | null {
+  if (!run) return null;
+  const [kind, id] = detailId.split(":", 2) as [string, string];
+  if (!kind || !id) return null;
+  if (kind === "joker") {
+    const j = run.jokers.find((x) => x.id === id);
+    if (!j) return null;
+    return renderDetailSheet({
+      title: j.name,
+      body: `<p>${escapeHtml(j.description)}</p>`,
+      actions: [
+        { action: "sell-joker", label: `Sell · $${j.sellValue}`, variant: "gold", data: { "joker-id": j.id } },
+      ],
+    });
+  }
+  if (kind === "card") {
+    const c = run.hand.find((x) => x.id === id);
+    if (!c) return null;
+    const suitName = c.suit.charAt(0).toUpperCase() + c.suit.slice(1);
+    return renderDetailSheet({
+      title: `${RANK_LABEL[c.rank]}${SUIT_SYMBOL[c.suit]} — ${suitName}`,
+      body: `<p>Rank <span class="text-neon-cyan">${RANK_LABEL[c.rank]}</span> · Suit <span class="text-neon-pink">${suitName}</span></p>
+             <p class="mt-1 text-white/55">Modifiers will land with PET-75 (editions, enhancements, seals).</p>`,
+    });
+  }
+  if (kind === "shop") {
+    const it = run.shop?.items.find((x) => x.id === id);
+    if (!it) return null;
+    if (it.kind === "joker") {
+      const slotsFull = run.jokers.length >= run.maxJokers;
+      const disabled = run.money < it.cost || slotsFull;
+      const buyLabel = slotsFull ? "Slots full" : `Buy · $${it.cost}`;
+      return renderDetailSheet({
+        title: it.name,
+        body: `<p class="text-[11px] uppercase tracking-widest text-neon-cyan">${it.rarity}</p>
+               <p class="mt-1">${escapeHtml(it.description)}</p>`,
+        actions: [{ action: "buy", label: buyLabel, variant: "go", data: { "item-id": it.id }, disabled }],
+      });
+    }
+    const afford = run.money >= it.cost;
+    return renderDetailSheet({
+      title: it.name,
+      body: `<p class="text-[11px] uppercase tracking-widest text-neon-gold">Planet</p>
+             <p class="mt-1">+${it.addChips} Chips · +${it.addMult} Mult to <span class="text-neon-pink">${HAND_NAME[it.hand]}</span></p>
+             <p class="mt-1 text-white/60">Lv ${it.targetLevel - 1} → ${it.targetLevel}</p>`,
+      actions: [
+        { action: "buy", label: `Buy · $${it.cost}`, variant: "go", data: { "item-id": it.id }, disabled: !afford },
+      ],
+    });
+  }
+  return null;
 }
 
 // ---- run end overlay -------------------------------------------------------
