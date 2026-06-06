@@ -22,6 +22,7 @@ import {
 } from "./ui.ts";
 import type {
   Card,
+  Consumable,
   DeckPeekDTO,
   DeckSummary,
   Difficulty,
@@ -49,6 +50,10 @@ interface ClientState {
   anim: AnimState | null;
   pendingNewRun: { difficulty: Difficulty } | null;
   detailId: string | null;
+  /** A consumable whose `needsSelection` requires the player to pick N cards first.
+   *  While set, the board enters "selection mode": existing toggle-card flow populates
+   *  `selected`; Confirm fires useConsumable, Cancel clears this. (PET-71) */
+  pendingConsumable: { instanceId: string; def: Consumable } | null;
 }
 
 const state: ClientState = {
@@ -64,6 +69,7 @@ const state: ClientState = {
   anim: null,
   pendingNewRun: null,
   detailId: null,
+  pendingConsumable: null,
 };
 
 function cardChipValue(rank: Rank): number {
@@ -91,7 +97,7 @@ function screenHtml(): string {
 
   const run = state.run;
   if (!run) return renderMainMenu(state.user, null);
-  if (run.status === "playing") return renderBoard(run, state.selected, state.preview);
+  if (run.status === "playing") return renderBoard(run, state.selected, state.preview, state.pendingConsumable);
   if (run.status === "selecting_blind") return renderBlindSelect(run);
   if (run.status === "shop") return renderShop(run);
   return renderRunOverlay(run); // won_run | lost_run
@@ -127,6 +133,7 @@ function setRun(run: RunStateDTO): void {
   state.anim = null;
   state.pendingNewRun = null;
   state.detailId = null;
+  state.pendingConsumable = null;
   render();
 }
 
@@ -174,6 +181,7 @@ function signOut(): void {
   state.deckPeek = null;
   state.anim = null;
   state.detailId = null;
+  state.pendingConsumable = null;
   render();
 }
 
@@ -263,10 +271,17 @@ async function refreshPreview(): Promise<void> {
 function toggleCard(id: string): void {
   const run = state.run;
   if (!run || run.status !== "playing" || state.anim) return;
+  // In selection mode the cap is the consumable's max, not the play-hand cap.
+  const pending = state.pendingConsumable;
+  const cap =
+    pending && pending.def.needsSelection
+      ? pending.def.needsSelection.max
+      : run.maxSelect;
   if (state.selected.has(id)) state.selected.delete(id);
-  else if (state.selected.size < run.maxSelect) state.selected.add(id);
+  else if (state.selected.size < cap) state.selected.add(id);
   render();
-  schedulePreview();
+  // Don't fetch a play-preview while picking targets for a consumable.
+  if (!pending) schedulePreview();
 }
 
 async function play(): Promise<void> {
@@ -403,15 +418,58 @@ async function sellJokerAction(jokerId: string): Promise<void> {
   }
 }
 
-// ---- consumables / skip (PET-67 scaffold) ----
+// ---- consumables / skip (PET-67 scaffold; PET-71 selection mode) ----
 
+/** Click on a consumable's "Use" → either enter selection mode (and wait for Confirm)
+ *  or fire useConsumable immediately. Gated on the DTO carrying `needsSelection`:
+ *  when the backend hasn't shipped that field yet, every consumable is fire-immediately
+ *  and the modal flow stays dormant. (PET-71) */
 async function useConsumableAction(instanceId: string): Promise<void> {
   if (!state.token || state.anim) return;
+  const c = state.run?.consumables.find((x) => x.id === instanceId);
+  const sel = c?.needsSelection;
+  if (c && sel && sel.min > 0) {
+    state.pendingConsumable = { instanceId, def: c };
+    state.selected.clear();
+    state.preview = null;
+    state.detailId = null; // close the detail sheet that initiated the use, if any
+    const target = sel.from === "hand" ? "cards" : "jokers";
+    const count = sel.min === sel.max ? `${sel.min}` : `${sel.min}–${sel.max}`;
+    showToast(`Pick ${count} ${target} then tap Confirm`, "info");
+    render();
+    return;
+  }
   try {
-    setRun(await api.useConsumable(state.token, instanceId, [...state.selected]));
+    setRun(await api.useConsumable(state.token, instanceId, []));
   } catch (err) {
     showToast((err as Error).message, "error");
   }
+}
+
+async function confirmPendingConsumable(): Promise<void> {
+  const pending = state.pendingConsumable;
+  if (!state.token || !pending || state.anim) return;
+  const sel = pending.def.needsSelection;
+  const picked = [...state.selected];
+  if (sel && (picked.length < sel.min || picked.length > sel.max)) {
+    const count = sel.min === sel.max ? `${sel.min}` : `${sel.min}–${sel.max}`;
+    const target = sel.from === "hand" ? "cards" : "jokers";
+    showToast(`Pick ${count} ${target} first`, "error");
+    return;
+  }
+  try {
+    setRun(await api.useConsumable(state.token, pending.instanceId, picked));
+  } catch (err) {
+    showToast((err as Error).message, "error");
+  }
+}
+
+function cancelPendingConsumable(): void {
+  if (!state.pendingConsumable) return;
+  state.pendingConsumable = null;
+  state.selected.clear();
+  state.preview = null;
+  render();
 }
 
 async function sellConsumableAction(instanceId: string): Promise<void> {
@@ -512,6 +570,7 @@ const ASYNC_ACTIONS = new Set([
   "use-consumable",
   "sell-consumable",
   "skip-blind",
+  "confirm-consumable",
 ]);
 
 /** Marks a button as in-flight (disabled + spinner) for the duration of an async handler.
@@ -567,6 +626,8 @@ app.addEventListener("click", (event) => {
     case "move-joker-right": if (el.dataset.jokerId) void moveJokerAction(el.dataset.jokerId, "right"); break;
     case "use-consumable": if (el.dataset.instanceId) { const id = el.dataset.instanceId; guard(() => useConsumableAction(id)); } break;
     case "sell-consumable": if (el.dataset.instanceId) { const id = el.dataset.instanceId; guard(() => sellConsumableAction(id)); } break;
+    case "confirm-consumable": guard(confirmPendingConsumable); break;
+    case "cancel-consumable": cancelPendingConsumable(); break;
     case "skip-blind": guard(skipBlindAction); break;
     case "confirm-new-run": guard(() => { confirmNewRun(); }); break;
     case "cancel-new-run": cancelNewRun(); break;
@@ -582,11 +643,16 @@ app.addEventListener("keydown", (event) => {
   }
 });
 
-// Esc dismisses the detail sheet (keyboard parity with outside-click on the scrim).
+// Esc dismisses the detail sheet (keyboard parity with outside-click on the scrim);
+// when no sheet is open but a consumable is waiting on selection, Esc cancels selection mode.
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && state.detailId) {
+  if (event.key !== "Escape") return;
+  if (state.detailId) {
     event.preventDefault();
     closeDetail();
+  } else if (state.pendingConsumable) {
+    event.preventDefault();
+    cancelPendingConsumable();
   }
 });
 

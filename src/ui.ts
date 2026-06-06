@@ -379,13 +379,18 @@ export function renderBoard(
   run: RunStateDTO,
   selected: Set<string>,
   preview: ScoreBreakdown | null,
+  pendingConsumable: { instanceId: string; def: Consumable } | null = null,
 ): string {
   const scoring = new Set(preview?.scoringCardIds ?? []);
   const cardsHtml = run.hand
     .map((c, i) => renderCard(c, selected.has(c.id), scoring.has(c.id), i))
     .join("");
 
-  const canPlay = selected.size >= 1 && selected.size <= run.maxSelect && run.status === "playing";
+  // While picking targets for a consumable, hide play/discard so the only commit path
+  // is Confirm/Cancel on the prompt — keeps the board state-machine unambiguous (PET-71).
+  const inSelection = pendingConsumable !== null;
+  const canPlay =
+    !inSelection && selected.size >= 1 && selected.size <= run.maxSelect && run.status === "playing";
   const canDiscard = canPlay && run.discardsRemaining > 0;
   const progressPct = Math.min(100, Math.round((run.totalScore / run.target) * 100));
   const boss = run.blindKind === "boss";
@@ -393,6 +398,10 @@ export function renderBoard(
   const lastPlay = run.lastPlay
     ? `<div class="text-sm text-white/70">Last: <span class="font-display text-neon-pink">${run.lastPlay.breakdown.handLabel}</span> +${run.lastPlay.breakdown.score}</div>`
     : `<div class="h-5"></div>`;
+
+  const selectionPrompt = pendingConsumable
+    ? renderConsumableSelectionPrompt(pendingConsumable.def, selected.size)
+    : "";
 
   return `
   <div class="${SCREEN} gap-3 p-3 sm:p-4 md:gap-4 md:p-6 ${boss ? "cy-boss" : ""}">
@@ -425,19 +434,54 @@ export function renderBoard(
     ${renderHandLevels(run.handLevels)}
 
     <div class="flex flex-1 flex-col items-center justify-end gap-3 pb-1 sm:gap-4">
-      ${renderPreviewLine(selected.size, preview)}
+      ${inSelection ? "" : renderPreviewLine(selected.size, preview)}
+      ${selectionPrompt}
       <div class="flex flex-wrap items-end justify-center gap-1.5 sm:gap-2">${cardsHtml}</div>
     </div>
 
     <footer class="flex flex-col items-center gap-2 sm:gap-3">
-      ${lastPlay}
+      ${inSelection ? "" : lastPlay}
       <div class="flex flex-wrap justify-center gap-2 sm:gap-3">
-        <button data-action="play" ${canPlay ? "" : "disabled"} class="cy-btn cy-btn--go">Play Hand</button>
-        <button data-action="discard" ${canDiscard ? "" : "disabled"} class="cy-btn cy-btn--ghost">Discard (${run.discardsRemaining})</button>
+        ${inSelection
+          ? renderConsumableConfirmRow(pendingConsumable!.def, selected.size)
+          : `<button data-action="play" ${canPlay ? "" : "disabled"} class="cy-btn cy-btn--go">Play Hand</button>
+             <button data-action="discard" ${canDiscard ? "" : "disabled"} class="cy-btn cy-btn--ghost">Discard (${run.discardsRemaining})</button>`}
       </div>
-      <p class="text-[11px] text-white/40">Select 1–${run.maxSelect} cards. Discards swap cards without using a hand.</p>
+      <p class="text-[11px] text-white/40">${
+        inSelection
+          ? "Cancel to return to the hand."
+          : `Select 1–${run.maxSelect} cards. Discards swap cards without using a hand.`
+      }</p>
     </footer>
   </div>`;
+}
+
+/** Top-of-cards banner shown while a consumable is awaiting target selection (PET-71).
+ *  Renders consumable name + a live N/Max counter so the player can see when Confirm unlocks. */
+function renderConsumableSelectionPrompt(def: Consumable, picked: number): string {
+  const sel = def.needsSelection;
+  if (!sel) return "";
+  const target = sel.from === "hand" ? "cards" : "jokers";
+  const range = sel.min === sel.max ? `${sel.min}` : `${sel.min}–${sel.max}`;
+  return `
+  <div class="cy-panel cy-panel--pink flex flex-col items-center gap-1 px-4 py-2 sm:flex-row sm:gap-3">
+    <span class="cy-tag cy-tag--planet">${escapeHtml(def.kind)}</span>
+    <span class="font-display text-base font-black text-neon-pink neon-text">${escapeHtml(def.name)}</span>
+    <span class="text-[11px] uppercase tracking-widest text-white/75">
+      Pick ${range} ${target} · <span class="font-display text-neon-cyan">${picked}/${sel.max}</span>
+    </span>
+  </div>`;
+}
+
+/** Confirm / Cancel pair that replaces Play / Discard during consumable selection (PET-71). */
+function renderConsumableConfirmRow(def: Consumable, picked: number): string {
+  const sel = def.needsSelection;
+  if (!sel) return "";
+  const ready = picked >= sel.min && picked <= sel.max;
+  return `
+    <button data-action="confirm-consumable" ${ready ? "" : "disabled"} class="cy-btn cy-btn--play">Confirm</button>
+    <button data-action="cancel-consumable" class="cy-btn cy-btn--ghost">Cancel</button>
+  `;
 }
 
 /** Top utility bar: Menu (exit), deck name, Deck peek. Used on board + blind-select. */

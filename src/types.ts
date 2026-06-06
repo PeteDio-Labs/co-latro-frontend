@@ -26,6 +26,15 @@ export interface Card {
   seal?: Seal;
 }
 
+/** Selection requirement for consumables that need the player to pick targets before use.
+ *  Optional — when absent on the DTO (e.g. backend pre-PET-71-BE), the FE treats the consumable
+ *  as fire-immediately. `from` declares the source pool (board hand vs owned jokers). */
+export interface ConsumableSelection {
+  min: number;
+  max: number;
+  from: "hand" | "owned_jokers";
+}
+
 /** A consumable (tarot/planet/spectral) the player owns or is offered. */
 export interface Consumable {
   id: string;
@@ -33,6 +42,8 @@ export interface Consumable {
   name: string;
   description: string;
   kind: "tarot" | "planet" | "spectral";
+  /** When present + min > 0, using opens selection mode. Null/undefined → fire immediately. */
+  needsSelection?: ConsumableSelection | null;
 }
 
 /** A purchased voucher applying a run-long modifier. */
