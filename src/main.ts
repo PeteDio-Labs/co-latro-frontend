@@ -2,6 +2,7 @@
 
 import "./styles.css";
 import * as api from "./api.ts";
+import { showToast } from "./toast.ts";
 import {
   renderBlindSelect,
   renderBoard,
@@ -149,7 +150,7 @@ async function signIn(): Promise<void> {
     state.menuView = "menu";
     render();
   } catch (err) {
-    alert((err as Error).message);
+    showToast((err as Error).message, "error");
   }
 }
 
@@ -173,7 +174,7 @@ async function gotoPlay(): Promise<void> {
   try {
     state.decks = (await api.listDecks(state.token)).decks;
   } catch (err) {
-    alert((err as Error).message);
+    showToast((err as Error).message, "error");
     return;
   }
   state.menuView = "decks";
@@ -201,7 +202,7 @@ async function startNewRun(difficulty: Difficulty): Promise<void> {
   try {
     setRun(await api.startRun(state.token, difficulty, state.selectedDeckId));
   } catch (err) {
-    alert((err as Error).message);
+    showToast((err as Error).message, "error");
   }
 }
 
@@ -222,7 +223,7 @@ async function beginBlind(): Promise<void> {
   try {
     setRun(await api.startBlind(state.token));
   } catch (err) {
-    alert((err as Error).message);
+    showToast((err as Error).message, "error");
   }
 }
 
@@ -266,7 +267,7 @@ async function play(): Promise<void> {
   try {
     result = await api.playHand(state.token, [...state.selected]);
   } catch (err) {
-    alert((err as Error).message);
+    showToast((err as Error).message, "error");
     return;
   }
   const breakdown = result.lastPlay?.breakdown;
@@ -348,7 +349,7 @@ async function discard(): Promise<void> {
   try {
     setRun(await api.discardCards(state.token, [...state.selected]));
   } catch (err) {
-    alert((err as Error).message);
+    showToast((err as Error).message, "error");
   }
 }
 
@@ -359,7 +360,7 @@ async function buy(itemId: string): Promise<void> {
   try {
     setRun(await api.buyItem(state.token, itemId));
   } catch (err) {
-    alert((err as Error).message);
+    showToast((err as Error).message, "error");
   }
 }
 
@@ -368,7 +369,7 @@ async function reroll(): Promise<void> {
   try {
     setRun(await api.rerollShop(state.token));
   } catch (err) {
-    alert((err as Error).message);
+    showToast((err as Error).message, "error");
   }
 }
 
@@ -377,7 +378,7 @@ async function cashOutContinue(): Promise<void> {
   try {
     setRun(await api.continueRun(state.token));
   } catch (err) {
-    alert((err as Error).message);
+    showToast((err as Error).message, "error");
   }
 }
 
@@ -388,7 +389,7 @@ async function sellJokerAction(jokerId: string): Promise<void> {
   try {
     setRun(await api.sellJoker(state.token, jokerId));
   } catch (err) {
-    alert((err as Error).message);
+    showToast((err as Error).message, "error");
   }
 }
 
@@ -397,7 +398,7 @@ async function moveJokerAction(jokerId: string, dir: "left" | "right"): Promise<
   try {
     setRun(await api.reorderJoker(state.token, jokerId, dir));
   } catch (err) {
-    alert((err as Error).message);
+    showToast((err as Error).message, "error");
   }
 }
 
@@ -409,7 +410,7 @@ async function openDeckPeek(): Promise<void> {
     state.deckPeek = await api.peekDeck(state.token);
     render();
   } catch (err) {
-    alert((err as Error).message);
+    showToast((err as Error).message, "error");
   }
 }
 
@@ -441,11 +442,51 @@ function resume(): void {
 
 // ---- events ----
 
+/** Action names whose handlers fire an API call; the dispatcher disables the clicked button
+ *  and shows a spinner while the promise is in flight. Idempotent: if already loading, ignored. */
+const ASYNC_ACTIONS = new Set([
+  "signin",
+  "choose-difficulty",
+  "confirm-new-run",
+  "start-blind",
+  "play",
+  "discard",
+  "buy",
+  "reroll",
+  "continue",
+  "sell-joker",
+  "new-run",
+]);
+
+/** Marks a button as in-flight (disabled + spinner) for the duration of an async handler.
+ *  If render() replaces the button mid-flight (the common case after success), the new node
+ *  starts fresh — no leak. On failure (no re-render), finally restores the original button. */
+async function runGuarded(el: HTMLElement, fn: () => Promise<void> | void): Promise<void> {
+  const btn = el as HTMLButtonElement;
+  if (btn.dataset.loading === "1") return;
+  const wasDisabled = btn.disabled;
+  btn.dataset.loading = "1";
+  btn.disabled = true;
+  try {
+    await fn();
+  } finally {
+    // If the button is still in the live DOM (no re-render occurred — e.g. error path),
+    // restore it so the user can retry. Otherwise this is a no-op on a detached node.
+    btn.dataset.loading = "";
+    delete btn.dataset.loading;
+    btn.disabled = wasDisabled;
+  }
+}
+
 app.addEventListener("click", (event) => {
   const el = (event.target as HTMLElement).closest<HTMLElement>("[data-action]");
   if (!el) return;
-  switch (el.dataset.action) {
-    case "signin": void signIn(); break;
+  const action = el.dataset.action;
+  const guard = action && ASYNC_ACTIONS.has(action)
+    ? (fn: () => Promise<void> | void) => void runGuarded(el, fn)
+    : (fn: () => Promise<void> | void) => void fn();
+  switch (action) {
+    case "signin": guard(signIn); break;
     case "signout": signOut(); break;
     case "goto-play": void gotoPlay(); break;
     case "goto-settings": goMenu("settings"); break;
@@ -453,22 +494,22 @@ app.addEventListener("click", (event) => {
     case "back-to-menu": goMenu("menu"); break;
     case "resume": resume(); break;
     case "choose-deck": if (el.dataset.deckId) chooseDeck(el.dataset.deckId); break;
-    case "choose-difficulty": void chooseDifficulty(el.dataset.difficulty as Difficulty); break;
-    case "start-blind": void beginBlind(); break;
+    case "choose-difficulty": guard(() => chooseDifficulty(el.dataset.difficulty as Difficulty)); break;
+    case "start-blind": guard(beginBlind); break;
     case "toggle-card": if (el.dataset.cardId) toggleCard(el.dataset.cardId); break;
-    case "play": void play(); break;
-    case "discard": void discard(); break;
-    case "buy": if (el.dataset.itemId) void buy(el.dataset.itemId); break;
-    case "reroll": void reroll(); break;
-    case "continue": void cashOutContinue(); break;
+    case "play": guard(play); break;
+    case "discard": guard(discard); break;
+    case "buy": if (el.dataset.itemId) { const id = el.dataset.itemId; guard(() => buy(id)); } break;
+    case "reroll": guard(reroll); break;
+    case "continue": guard(cashOutContinue); break;
     case "open-deck-peek": void openDeckPeek(); break;
     case "close-deck-peek": closeDeckPeek(); break;
     case "exit-to-menu": exitToMenu(); break;
-    case "new-run": void newRun(); break;
-    case "sell-joker": if (el.dataset.jokerId) void sellJokerAction(el.dataset.jokerId); break;
+    case "new-run": guard(newRun); break;
+    case "sell-joker": if (el.dataset.jokerId) { const id = el.dataset.jokerId; guard(() => sellJokerAction(id)); } break;
     case "move-joker-left": if (el.dataset.jokerId) void moveJokerAction(el.dataset.jokerId, "left"); break;
     case "move-joker-right": if (el.dataset.jokerId) void moveJokerAction(el.dataset.jokerId, "right"); break;
-    case "confirm-new-run": confirmNewRun(); break;
+    case "confirm-new-run": guard(() => { confirmNewRun(); }); break;
     case "cancel-new-run": cancelNewRun(); break;
     // "peek-noop" / "confirm-noop": clicks inside a modal panel — do nothing
   }
