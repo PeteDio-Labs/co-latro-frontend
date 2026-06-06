@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./motion.css";
 
 /* Theme: "Neon Tube" (Asian-nightlife) — Monoton + Rajdhani on near-black.
    Role-based palette: cyan=CHIPS, pink=MULT, violet=FRAME, gold=MONEY, lime=GO/GAINS. */
