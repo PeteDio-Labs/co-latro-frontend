@@ -5,6 +5,7 @@ import type {
   BossEffect,
   Card,
   Consumable,
+  Difficulty,
   DeckPeekDTO,
   DeckSummary,
   HandLevels,
@@ -37,6 +38,18 @@ const BLIND_LABEL: Record<BlindKind, string> = {
 const BLIND_ORDER: BlindKind[] = ["small", "big", "boss"];
 const BLIND_MULT: Record<BlindKind, string> = { small: "×1", big: "×1.5", boss: "×2" };
 const BLIND_REWARD: Record<BlindKind, number> = { small: 3, big: 4, boss: 5 };
+
+// --- ante ladder math (mirror of backend engine/ante.ts — keep in sync) -------
+// Lets the blind-select screen show every blind's real score-to-beat, not just the
+// current one. target = round(ANTE_BASE[ante] × blindMult × difficultyMult).
+const ANTE_BASE: readonly number[] = [0, 300, 800, 2000, 5000, 11000, 20000, 35000, 50000];
+const BLIND_MULT_NUM: Record<BlindKind, number> = { small: 1, big: 1.5, boss: 2 };
+const DIFFICULTY_TARGET_MULT: Record<Difficulty, number> = { easy: 0.6, medium: 1.0, hard: 1.4 };
+function blindTarget(ante: number, blindIndex: number, difficulty: Difficulty): number {
+  const base = ANTE_BASE[ante] ?? 0;
+  const mult = BLIND_MULT_NUM[BLIND_ORDER[blindIndex] ?? "small"];
+  return Math.round(base * mult * DIFFICULTY_TARGET_MULT[difficulty]);
+}
 const HAND_NAME: Record<HandType, string> = {
   high_card: "High Card",
   pair: "Pair",
@@ -230,13 +243,13 @@ function difficultyButton(value: string, label: string, detail: string): string 
 
 export function renderBlindSelect(run: RunStateDTO): string {
   const boss = run.blindKind === "boss";
-  // Skip available on small/big blinds — PET-78 wires the tag-reward backend; here we expose the button.
-  const canSkip = run.blindKind === "small" || run.blindKind === "big";
-  // Mirror ante-pack.html Screen 2 `.blindtok.{small|big|boss}` — pips, kicker, big name, mult,
-  // SCORE TO BEAT (cyan focal, pink on boss), reward, and a "dual" Play+Skip row.
-  // Boss variant gets the danger glyph + "NO SKIP" badge per `.blindtok.boss + .noskip`.
-  const variantClass = boss ? "cy-blindtok--boss" : "cy-blindtok--current";
-  const danger = boss ? `<span class="cy-blindtok__danger" aria-hidden="true">⚠</span>` : "";
+  // Show ALL THREE blinds of the ante as an ordered Small → Big → Boss path (per
+  // ante-pack.html Screen 1) — not just the current one. The current blind is the
+  // focal hero (lime, pink for boss); already-cleared blinds read CLEARED + dim;
+  // still-locked blinds are dimmed (boss = NO SKIP). Only the current blind is interactive.
+  const path = BLIND_ORDER.map((kind, i) => renderBlindTok(run, kind, i)).join(
+    `<div class="cy-blind-spine" aria-hidden="true"></div>`,
+  );
   return `
   <div class="${SCREEN} gap-4 p-3 sm:p-4 md:p-6 ${boss ? "cy-boss" : ""}">
     ${topBar(run)}
@@ -246,27 +259,74 @@ export function renderBlindSelect(run: RunStateDTO): string {
     ${renderBossWarning(run.bossEffect)}
     ${renderJokers(run.jokers, run.maxJokers, true)}
     <div class="flex flex-1 flex-col items-center justify-center gap-5">
-      <div class="font-display text-[10px] uppercase tracking-[0.28em] text-neon-cyan">Ante ${run.ante} / ${run.maxAnte} // choose your fight</div>
-      <div class="cy-blindtok ${variantClass}">
-        ${danger}
-        <div class="cy-blindtok__pips">${blindTokPip(0, run.blindIndex)}${blindTokPip(1, run.blindIndex)}${blindTokPip(2, run.blindIndex)}</div>
-        <div class="cy-blindtok__kicker">Ante ${run.ante} · ${run.blindKind.toUpperCase()}</div>
-        <div class="cy-blindtok__name">${BLIND_LABEL[run.blindKind].replace(/ Blind$/i, " BLIND")}</div>
-        <div class="cy-blindtok__mult">${BLIND_MULT[run.blindKind]}</div>
-        <div class="cy-blindtok__tgt">SCORE TO BEAT<b>${run.target}</b></div>
-        <div class="cy-blindtok__rew">$${BLIND_REWARD[run.blindKind]} + $1 / hand</div>
-        ${canSkip
-          ? `<div class="cy-blindtok__dual">
-               <button data-action="start-blind" class="cy-btn cy-btn--play cy-btn--sm">Play ▸</button>
-               <button data-action="skip-blind" class="cy-btn cy-btn--skip cy-btn--sm">Skip → Tag</button>
-             </div>`
-          : `<div class="cy-blindtok__dual">
-               <button data-action="start-blind" class="cy-btn cy-btn--play">Play ${BLIND_LABEL[run.blindKind]} ▸</button>
-             </div>
-             <div class="cy-blindtok__noskip">NO SKIP — must be played</div>`}
-      </div>
+      <div class="font-display text-[10px] uppercase tracking-[0.28em] text-neon-cyan">Ante ${run.ante} / ${run.maxAnte} // small → big → boss</div>
+      <div class="cy-blind-path">${path}</div>
       <div class="text-sm text-white/60">Money: <span class="font-display text-neon-gold">$${run.money}</span> · Hands ${run.handsRemaining} · Discards ${run.discardsRemaining}</div>
     </div>
+  </div>`;
+}
+
+/** One blind token in the Small→Big→Boss path. `index` is this blind's slot (0/1/2);
+ *  the run's current slot is `run.blindIndex`. Past = CLEARED, current = focal hero,
+ *  future = locked. Only the current blind carries Play/Skip actions (the engine always
+ *  plays the current blind — PET-78 wires the tag-reward backend). Targets come from
+ *  `blindTarget()` so every blind shows its real score-to-beat, not just the current one. */
+function renderBlindTok(run: RunStateDTO, kind: BlindKind, index: number): string {
+  const current = run.blindIndex;
+  const state: "done" | "current" | "upcoming" =
+    index < current ? "done" : index === current ? "current" : "upcoming";
+  const isBoss = kind === "boss";
+  const target = blindTarget(run.ante, index, run.difficulty);
+  const canSkip = state === "current" && (kind === "small" || kind === "big");
+
+  const variantClass =
+    state === "done"
+      ? "cy-blindtok--done"
+      : state === "current"
+        ? isBoss
+          ? "cy-blindtok--boss"
+          : "cy-blindtok--current"
+        : isBoss
+          ? "cy-blindtok--upcoming cy-blindtok--bosshint"
+          : "cy-blindtok--upcoming";
+
+  const danger =
+    isBoss && state !== "done"
+      ? `<span class="cy-blindtok__danger" aria-hidden="true">⚠</span>`
+      : "";
+
+  let footer: string;
+  if (state === "done") {
+    footer = `<div class="cy-blindtok__cleared">✓ CLEARED</div>`;
+  } else if (state === "current") {
+    footer = canSkip
+      ? `<div class="cy-blindtok__dual">
+           <button data-action="start-blind" class="cy-btn cy-btn--play cy-btn--sm">Play ▸</button>
+           <button data-action="skip-blind" class="cy-btn cy-btn--skip cy-btn--sm">Skip → Tag</button>
+         </div>`
+      : `<div class="cy-blindtok__dual">
+           <button data-action="start-blind" class="cy-btn cy-btn--play">Play ${BLIND_LABEL[kind]} ▸</button>
+         </div>
+         <div class="cy-blindtok__noskip">NO SKIP — must be played</div>`;
+  } else {
+    footer = isBoss
+      ? `<div class="cy-blindtok__noskip">🔒 NO SKIP — mandatory</div>`
+      : `<div class="cy-blindtok__upcoming-lbl">Upcoming</div>`;
+  }
+
+  const tgt =
+    state === "done" ? `SCORE<b><s>${target}</s></b>` : `SCORE TO BEAT<b>${target}</b>`;
+
+  return `
+  <div class="cy-blindtok ${variantClass}">
+    ${danger}
+    <div class="cy-blindtok__pips">${blindTokPip(0, current)}${blindTokPip(1, current)}${blindTokPip(2, current)}</div>
+    <div class="cy-blindtok__kicker">Ante ${run.ante} · ${kind.toUpperCase()}</div>
+    <div class="cy-blindtok__name">${BLIND_LABEL[kind].replace(/ Blind$/i, " BLIND")}</div>
+    <div class="cy-blindtok__mult">${BLIND_MULT[kind]}</div>
+    <div class="cy-blindtok__tgt">${tgt}</div>
+    <div class="cy-blindtok__rew">$${BLIND_REWARD[kind]} + $1 / hand</div>
+    ${footer}
   </div>`;
 }
 
