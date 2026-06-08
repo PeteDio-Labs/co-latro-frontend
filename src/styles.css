@@ -719,6 +719,61 @@ body::before {
   margin-top: auto;
 }
 
+/* --- Small → Big → Boss path: all three blinds shown at once (ante-pack Screen 1).
+   Stack on mobile, row on desktop. Current blind is the full-size focal card; the
+   cleared + upcoming blinds are narrower + dimmed so the hero stays dominant. */
+.cy-blind-path {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.cy-blind-spine {
+  width: 2px; height: 14px;
+  background: linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.28));
+}
+@media (min-width: 920px) {
+  .cy-blind-path { flex-direction: row; align-items: stretch; justify-content: center; gap: 12px; }
+  .cy-blind-spine {
+    width: 20px; height: 2px; align-self: center;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.28));
+  }
+}
+
+/* cleared + upcoming = compact, dimmed supporting cards */
+.cy-blindtok--done,
+.cy-blindtok--upcoming {
+  min-height: 0;
+  width: clamp(240px, 80vw, 300px);
+  opacity: 0.6;
+}
+.cy-blindtok--done { border-color: rgba(140, 255, 91, 0.45); }
+.cy-blindtok--done .cy-blindtok__tgt b { color: rgba(255, 255, 255, 0.55); text-shadow: none; }
+/* upcoming boss keeps a faint pink danger read */
+.cy-blindtok--bosshint { border-color: rgba(255, 46, 151, 0.5); }
+.cy-blindtok--bosshint .cy-blindtok__name,
+.cy-blindtok--bosshint .cy-blindtok__mult { color: var(--color-neon-pink); }
+.cy-blindtok--bosshint .cy-blindtok__tgt b {
+  color: var(--color-neon-pink);
+  text-shadow: 0 0 12px rgba(255, 46, 151, 0.45);
+}
+.cy-blindtok__cleared {
+  font-family: "Orbitron", sans-serif; font-weight: 700;
+  font-size: 11px; letter-spacing: 0.16em;
+  color: var(--color-neon-lime);
+  text-shadow: 0 0 8px rgba(140, 255, 91, 0.5);
+  margin-top: auto; padding-top: 6px;
+}
+.cy-blindtok__upcoming-lbl {
+  font-family: "Orbitron", sans-serif; font-weight: 700;
+  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  padding: 7px 10px;
+  margin-top: auto;
+}
+
 /* SKIP button variant — violet ghost button per ante-pack .hero .skip */
 .cy-btn--skip {
   background: transparent;

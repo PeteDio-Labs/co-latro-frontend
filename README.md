@@ -21,6 +21,29 @@ bun run build      # tsc --noEmit && vite build  → dist/
 bun run typecheck
 ```
 
+## Tests
+
+Two layers (PET-66):
+
+- **Vitest unit tests** (`src/*.test.ts`) — pure render functions (`ui.ts`), the fetch wrappers
+  (`api.ts`) with `vi.spyOn(globalThis, 'fetch')`, and the toast manager's DOM mount + auto-dismiss
+  timing under fake timers. Runs in jsdom; configured in `vitest.config.ts`.
+  ```bash
+  bun run test        # one-shot
+  bun run test:watch  # interactive
+  ```
+  CI gate: this runs on every PR via `.github/workflows/ci.yml`.
+
+- **Playwright E2E smoke** (`e2e/smoke.spec.ts`) — sign-in → start run → play a hand → reach the
+  shop, against the docker-compose stack at `http://localhost:8080` (override with
+  `E2E_BASE_URL=...`). The browser binary is installed on demand.
+  ```bash
+  bunx playwright install --with-deps chromium   # first run only
+  bun run e2e
+  ```
+  **Not yet in CI** — gating it needs the backend + nginx (serving `dist/`) stood up inside the
+  workflow. Tracked as a follow-up to PET-66.
+
 ## What's here
 
 - **Screens** — pure render functions → HTML strings, event-delegated via `data-action`: sign-in, menu,
