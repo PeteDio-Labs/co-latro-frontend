@@ -231,9 +231,18 @@ body::before {
 .cy-card--red { border-color: var(--color-neon-pink); box-shadow: 0 0 10px rgba(255, 46, 151, 0.28), inset 0 0 16px rgba(0, 0, 0, 0.6); }
 .cy-card--red .r, .cy-card--red .p { color: var(--color-neon-pink); }
 .cy-card--black .r, .cy-card--black .p { color: var(--color-neon-cyan); }
-.cy-card--sel { transform: translateY(-14px); border-color: var(--color-neon-lime); box-shadow: 0 0 0 1px var(--color-neon-lime), 0 0 22px rgba(140, 255, 91, 0.5); }
-.cy-card--scoring, .cy-card--pop { transform: translateY(-14px); border-color: var(--color-neon-pink); box-shadow: 0 0 0 1px var(--color-neon-pink), 0 0 22px rgba(255, 46, 151, 0.55); }
+/* Selected but NOT part of the scoring hand: just "picked" — small lift, neutral white ring. */
+.cy-card--sel { transform: translateY(-10px); border-color: #fff; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85), 0 0 16px rgba(255, 255, 255, 0.3); }
+/* Cards that form the poker hand to be played: lifted higher + lime ring (matches the hand name). */
+.cy-card--scoring { transform: translateY(-24px); border-color: var(--color-neon-lime); box-shadow: 0 0 0 2px var(--color-neon-lime), 0 0 26px rgba(140, 255, 91, 0.75); }
+.cy-card--pop { transform: translateY(-14px); border-color: var(--color-neon-pink); box-shadow: 0 0 0 1px var(--color-neon-pink), 0 0 22px rgba(255, 46, 151, 0.55); }
 .cy-card--dim { opacity: 0.4; }
+/* lime hand-name glow — ties the preview hand label to the lime scoring cards */
+.neon-lime-text { text-shadow: 0 0 6px var(--color-neon-lime), 0 0 18px rgba(140, 255, 91, 0.55); }
+/* big carousel arrows for the new-run deck selector */
+.cy-arrow { font-size: clamp(20px, 6vw, 30px); line-height: 1; color: var(--color-neon-cyan); padding: 8px 14px; border: 1px solid rgba(0, 229, 255, 0.4); background: rgba(0, 229, 255, 0.06); cursor: pointer; user-select: none; transition: filter 0.15s, background 0.15s, transform 0.1s; }
+.cy-arrow:hover { filter: brightness(1.3); background: rgba(0, 229, 255, 0.14); }
+.cy-arrow:active { transform: scale(0.92); }
 
 /* face-down card (PET-83) — boss-effect card-back. Violet gradient + cyan scanline
    overlay + neon "?" glyph. Player can still select; visuals only. Iterating welcome. */
@@ -264,8 +273,8 @@ body::before {
     0 0 14px rgba(0, 229, 255, 0.6),
     0 0 24px var(--color-neon-violet);
 }
-/* selected face-down still pops lime (consistent with other cards) */
-.cy-card--facedown.cy-card--sel { border-color: var(--color-neon-lime); }
+/* selected face-down still pops with the neutral white ring (consistent with other cards) */
+.cy-card--facedown.cy-card--sel { border-color: #fff; }
 
 /* chips × mult scoreboard */
 .cy-chip, .cy-mult {

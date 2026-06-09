@@ -10,10 +10,9 @@ import {
   renderBoard,
   renderConfirmDialog,
   renderDeckPeek,
-  renderDeckSelect,
   renderDetailFor,
-  renderDifficultyPicker,
   renderMainMenu,
+  renderNewRunSelect,
   renderOptions,
   renderPackOpen,
   renderPlayResolution,
@@ -38,7 +37,7 @@ import type {
 const app = document.querySelector<HTMLDivElement>("#app")!;
 const TOKEN_KEY = "poker.token";
 
-type MenuView = "menu" | "settings" | "options" | "decks" | "difficulty";
+type MenuView = "menu" | "settings" | "options" | "newrun";
 
 interface ClientState {
   token: string | null;
@@ -49,6 +48,7 @@ interface ClientState {
   menuView: MenuView | null;
   decks: DeckSummary[];
   selectedDeckId: string;
+  selectedDifficulty: Difficulty;
   deckPeek: DeckPeekDTO | null;
   anim: AnimState | null;
   pendingNewRun: { difficulty: Difficulty } | null;
@@ -70,6 +70,7 @@ const state: ClientState = {
   menuView: null,
   decks: [],
   selectedDeckId: "standard",
+  selectedDifficulty: "easy",
   deckPeek: null,
   anim: null,
   pendingNewRun: null,
@@ -88,22 +89,17 @@ function hasActiveRun(): boolean {
   return !!state.run && state.run.status !== "won_run" && state.run.status !== "lost_run";
 }
 
-function selectedDeckName(): string {
-  return state.decks.find((d) => d.id === state.selectedDeckId)?.name ?? "Standard Deck";
-}
-
-function screenHtml(): string {
+function screenHtml(dealIds: Set<string>): string {
   if (state.anim) return renderPlayResolution(state.anim);
   if (!state.user) return renderSignIn();
   if (state.menuView === "menu") return renderMainMenu(state.user, hasActiveRun() ? state.run : null);
   if (state.menuView === "settings") return renderSettings(state.user);
   if (state.menuView === "options") return renderOptions();
-  if (state.menuView === "decks") return renderDeckSelect(state.decks, state.selectedDeckId);
-  if (state.menuView === "difficulty") return renderDifficultyPicker(selectedDeckName());
+  if (state.menuView === "newrun") return renderNewRunSelect(state.decks, state.selectedDeckId, state.selectedDifficulty);
 
   const run = state.run;
   if (!run) return renderMainMenu(state.user, null);
-  if (run.status === "playing") return renderBoard(run, state.selected, state.preview, state.pendingConsumable);
+  if (run.status === "playing") return renderBoard(run, state.selected, state.preview, state.pendingConsumable, dealIds);
   if (run.status === "selecting_blind") return renderBlindSelect(run);
   // PET-70: pack opener screen takes over while a pack is being opened. If the backend
   // somehow flags pack_open without sending the pack contents, fall through to shop.
@@ -114,8 +110,15 @@ function screenHtml(): string {
   return renderRunOverlay(run); // won_run | lost_run
 }
 
+let lastHandIds = new Set<string>();
+
 function render(): void {
-  let html = screenHtml();
+  // Only deal-animate cards that just entered the hand — otherwise every re-render (e.g. selecting
+  // a card) replays the deal-in on all cards, which looked like the hand reshuffling.
+  const onBoard = state.run?.status === "playing" && !state.anim;
+  const handIds = onBoard ? state.run!.hand.map((c) => c.id) : [];
+  const dealIds = new Set(handIds.filter((id) => !lastHandIds.has(id)));
+  let html = screenHtml(dealIds);
   if (state.deckPeek && state.user && !state.anim) html += renderDeckPeek(state.deckPeek);
   if (state.pendingNewRun && state.user && !state.anim) {
     html += renderConfirmDialog(
@@ -132,6 +135,7 @@ function render(): void {
     else state.detailId = null; // target vanished (e.g. after sell/buy) — drop silently
   }
   app.innerHTML = html;
+  if (onBoard) lastHandIds = new Set(handIds);
   document.querySelector<HTMLInputElement>("#name-input")?.focus();
 }
 
@@ -198,7 +202,7 @@ function signOut(): void {
   render();
 }
 
-// ---- deck → difficulty → run ----
+// ---- new-run: deck carousel + difficulty → run ----
 
 async function gotoPlay(): Promise<void> {
   if (!state.token) return;
@@ -208,24 +212,37 @@ async function gotoPlay(): Promise<void> {
     showToast((err as Error).message, "error");
     return;
   }
-  state.menuView = "decks";
+  // Keep the selection valid (default to the first deck if the saved one vanished).
+  if (!state.decks.some((d) => d.id === state.selectedDeckId)) {
+    state.selectedDeckId = state.decks[0]?.id ?? "standard";
+  }
+  state.menuView = "newrun";
   render();
 }
 
-function chooseDeck(id: string): void {
-  state.selectedDeckId = id;
-  state.menuView = "difficulty";
+/** Cycle the deck carousel (wraps around the catalog). */
+function cycleDeck(dir: 1 | -1): void {
+  if (state.decks.length === 0) return;
+  const i = state.decks.findIndex((d) => d.id === state.selectedDeckId);
+  const next = (i + dir + state.decks.length) % state.decks.length;
+  state.selectedDeckId = state.decks[next]!.id;
   render();
 }
 
-async function chooseDifficulty(difficulty: Difficulty): Promise<void> {
+function setDifficulty(difficulty: Difficulty): void {
+  state.selectedDifficulty = difficulty;
+  render();
+}
+
+function startRunClick(): void {
   if (!state.token) return;
+  const difficulty = state.selectedDifficulty;
   if (hasActiveRun()) {
     state.pendingNewRun = { difficulty }; // confirm before overwriting the active save
     render();
     return;
   }
-  await startNewRun(difficulty);
+  void startNewRun(difficulty);
 }
 
 async function startNewRun(difficulty: Difficulty): Promise<void> {
@@ -617,7 +634,7 @@ function closeDetail(): void {
  *  and shows a spinner while the promise is in flight. Idempotent: if already loading, ignored. */
 const ASYNC_ACTIONS = new Set([
   "signin",
-  "choose-difficulty",
+  "start-run",
   "confirm-new-run",
   "start-blind",
   "play",
@@ -671,8 +688,10 @@ app.addEventListener("click", (event) => {
     case "goto-options": goMenu("options"); break;
     case "back-to-menu": goMenu("menu"); break;
     case "resume": resume(); break;
-    case "choose-deck": if (el.dataset.deckId) chooseDeck(el.dataset.deckId); break;
-    case "choose-difficulty": guard(() => chooseDifficulty(el.dataset.difficulty as Difficulty)); break;
+    case "deck-prev": cycleDeck(-1); break;
+    case "deck-next": cycleDeck(1); break;
+    case "set-difficulty": if (el.dataset.difficulty) setDifficulty(el.dataset.difficulty as Difficulty); break;
+    case "start-run": guard(startRunClick); break;
     case "start-blind": guard(beginBlind); break;
     case "toggle-card": if (el.dataset.cardId) toggleCard(el.dataset.cardId); break;
     case "play": guard(play); break;

@@ -6,8 +6,7 @@ import { describe, expect, test } from "vitest";
 import {
   renderBlindSelect,
   renderBoard,
-  renderDeckSelect,
-  renderDifficultyPicker,
+  renderNewRunSelect,
   renderMainMenu,
   renderShop,
   renderSignIn,
@@ -216,27 +215,27 @@ describe("renderShop", () => {
   });
 });
 
-describe("renderDeckSelect", () => {
-  test("renders one card per deck with the choose-deck action", () => {
-    const decks: DeckSummary[] = [
-      { id: "d1", name: "Standard", description: "Vanilla", perk: {}, size: 52 },
-      { id: "d2", name: "Red", description: "Plus hand", perk: { extraHands: 1 }, size: 52 },
-    ];
-    const html = renderDeckSelect(decks, "d1");
-    expect(html).toContain("Standard");
-    expect(html).toContain("Red");
-    expect(html).toContain('data-deck-id="d1"');
-    expect(html).toContain('data-deck-id="d2"');
-    expect(html.match(/data-action="choose-deck"/g)?.length).toBe(2);
-  });
-});
+describe("renderNewRunSelect", () => {
+  const decks: DeckSummary[] = [
+    { id: "d1", name: "Standard", description: "Vanilla", perk: {}, size: 52 },
+    { id: "d2", name: "Red", description: "Plus hand", perk: { extraHands: 1 }, size: 52 },
+  ];
 
-describe("renderDifficultyPicker", () => {
-  test("renders all three difficulties with their data values", () => {
-    const html = renderDifficultyPicker("Standard Deck");
+  test("shows only the selected deck, with prev/next carousel arrows", () => {
+    const html = renderNewRunSelect(decks, "d1", "easy");
+    expect(html).toContain("Standard");
+    expect(html).not.toContain("Red"); // carousel shows ONE deck at a time
+    expect(html).toContain('data-action="deck-prev"');
+    expect(html).toContain('data-action="deck-next"');
+    expect(html).toContain("Deck 1 / 2");
+  });
+
+  test("offers all three difficulties and a start-run action", () => {
+    const html = renderNewRunSelect(decks, "d1", "easy");
     expect(html).toContain('data-difficulty="easy"');
     expect(html).toContain('data-difficulty="medium"');
     expect(html).toContain('data-difficulty="hard"');
+    expect(html).toContain('data-action="start-run"');
   });
 });
 
