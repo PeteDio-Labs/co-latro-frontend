@@ -1,13 +1,13 @@
 {
-  "name": "Mini Balatro",
-  "short_name": "Mini Balatro",
+  "name": "Co-latro",
+  "short_name": "Co-latro",
   "description": "A neon Cyber-HUD roguelike poker game — hit the score, climb the antes.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#050208",
-  "theme_color": "#0a0612",
+  "background_color": "#0a0612",
+  "theme_color": "#ff2e97",
   "icons": [
     { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]
