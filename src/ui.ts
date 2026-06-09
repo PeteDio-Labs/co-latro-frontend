@@ -205,10 +205,10 @@ export function renderNewRunSelect(
   const deckPanel = deck
     ? `<div class="flex items-center justify-center gap-2 sm:gap-4">
          <button data-action="deck-prev" class="cy-arrow" aria-label="Previous deck">◀</button>
-         <div class="cy-panel cy-panel--solid cy-bd-rare flex w-64 max-w-[68vw] flex-col items-center gap-2 p-5 text-center">
+         <div class="cy-panel cy-panel--solid cy-bd-rare flex h-52 w-64 max-w-[68vw] flex-col items-center justify-center gap-2 p-5 text-center">
            <span class="text-[10px] uppercase tracking-[0.25em] text-white/45">Deck ${idx + 1} / ${decks.length}</span>
-           <span class="font-display text-2xl text-neon-pink neon-text">${escapeHtml(deck.name)}</span>
-           <span class="min-h-[2.5rem] text-sm text-white/80">${escapeHtml(deck.description)}</span>
+           <span class="font-display text-2xl leading-tight text-neon-pink neon-text">${escapeHtml(deck.name)}</span>
+           <span class="line-clamp-2 min-h-[2.5rem] text-sm leading-tight text-white/80">${escapeHtml(deck.description)}</span>
            <span class="text-[11px] uppercase tracking-wide text-neon-cyan/80">${deck.size} cards${deckPerkText(deck) ? ` · ${deckPerkText(deck)}` : ""}</span>
          </div>
          <button data-action="deck-next" class="cy-arrow" aria-label="Next deck">▶</button>
