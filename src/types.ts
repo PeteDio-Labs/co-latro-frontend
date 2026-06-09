@@ -24,6 +24,9 @@ export interface Card {
   enhancement?: Enhancement;
   edition?: Edition;
   seal?: Seal;
+  /** Boss-effect face-down (PET-83). When true, render as a card-back; backend reveals
+   *  rank/suit at score time by clearing this flag in lastPlay. */
+  faceDown?: boolean;
 }
 
 /** Selection requirement for consumables that need the player to pick targets before use.
