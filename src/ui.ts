@@ -50,6 +50,11 @@ function blindTarget(ante: number, blindIndex: number, difficulty: Difficulty): 
   const mult = BLIND_MULT_NUM[BLIND_ORDER[blindIndex] ?? "small"];
   return Math.round(base * mult * DIFFICULTY_TARGET_MULT[difficulty]);
 }
+const DIFFICULTY_META: Record<Difficulty, { label: string; detail: string }> = {
+  easy: { label: "Easy", detail: "5 hands · 4 discards" },
+  medium: { label: "Medium", detail: "4 hands · 3 discards" },
+  hard: { label: "Hard", detail: "3 hands · 2 discards" },
+};
 const HAND_NAME: Record<HandType, string> = {
   high_card: "High Card",
   pair: "Pair",
@@ -61,6 +66,9 @@ const HAND_NAME: Record<HandType, string> = {
   four_of_a_kind: "Four of a Kind",
   straight_flush: "Straight Flush",
   royal_flush: "Royal Flush",
+  five_of_a_kind: "Five of a Kind",
+  flush_house: "Flush House",
+  flush_five: "Flush Five",
 };
 
 /** Transient play-resolution animation state (built + stepped in main.ts). */
@@ -182,29 +190,54 @@ function menuShell(title: string, inner: string): string {
   </div>`;
 }
 
-// ---- deck select -----------------------------------------------------------
+// ---- new-run select (deck carousel + difficulty) ---------------------------
 
-export function renderDeckSelect(decks: DeckSummary[], selectedId: string | null): string {
+/** Balatro-style new-run screen: ONE deck shown with ◀ ▶ arrows to cycle through the
+ *  catalog, a difficulty selector, then Start Run. Replaces the old deck-grid + the
+ *  separate difficulty screen. */
+export function renderNewRunSelect(
+  decks: DeckSummary[],
+  selectedId: string,
+  difficulty: Difficulty,
+): string {
+  const idx = Math.max(0, decks.findIndex((d) => d.id === selectedId));
+  const deck = decks[idx];
+  const deckPanel = deck
+    ? `<div class="flex items-center justify-center gap-2 sm:gap-4">
+         <button data-action="deck-prev" class="cy-arrow" aria-label="Previous deck">◀</button>
+         <div class="cy-panel cy-panel--solid cy-bd-rare flex h-52 w-64 max-w-[68vw] flex-col items-center justify-center gap-2 p-5 text-center">
+           <span class="text-[10px] uppercase tracking-[0.25em] text-white/45">Deck ${idx + 1} / ${decks.length}</span>
+           <span class="font-display text-2xl leading-tight text-neon-pink neon-text">${escapeHtml(deck.name)}</span>
+           <span class="line-clamp-2 min-h-[2.5rem] text-sm leading-tight text-white/80">${escapeHtml(deck.description)}</span>
+           <span class="text-[11px] uppercase tracking-wide text-neon-cyan/80">${deck.size} cards${deckPerkText(deck) ? ` · ${deckPerkText(deck)}` : ""}</span>
+         </div>
+         <button data-action="deck-next" class="cy-arrow" aria-label="Next deck">▶</button>
+       </div>`
+    : `<div class="text-white/50">Loading decks…</div>`;
+
+  const diffRow = (Object.keys(DIFFICULTY_META) as Difficulty[])
+    .map((d) => {
+      const meta = DIFFICULTY_META[d];
+      const on = d === difficulty;
+      return `<button data-action="set-difficulty" data-difficulty="${d}"
+        class="cy-panel ${on ? "cy-panel--lime" : ""} flex flex-1 flex-col items-center gap-0.5 p-3 transition hover:brightness-110">
+        <span class="font-display text-sm sm:text-base ${on ? "text-neon-lime" : "text-white/80"}">${meta.label}</span>
+        <span class="text-[9px] sm:text-[10px] text-white/55">${meta.detail}</span>
+      </button>`;
+    })
+    .join("");
+
   return `
   <div class="cy-screen flex flex-col items-center justify-center gap-5 p-4 sm:p-6">
-    <h2 class="cy-title !text-3xl sm:!text-4xl">Choose a Deck</h2>
-    <div class="grid w-full max-w-3xl gap-3 sm:grid-cols-2">
-      ${decks.map((d) => deckCard(d, d.id === selectedId)).join("")}
+    <h2 class="cy-title !text-3xl sm:!text-4xl">New Run</h2>
+    ${deckPanel}
+    <div class="flex w-full max-w-md flex-col gap-2">
+      <span class="text-center text-[10px] uppercase tracking-[0.3em] text-white/45">Difficulty</span>
+      <div class="flex gap-2">${diffRow}</div>
     </div>
+    <button data-action="start-run" class="cy-btn cy-btn--go !px-10 !py-3 !text-base">Start Run ▶</button>
     <button data-action="back-to-menu" class="cy-btn cy-btn--ghost cy-btn--sm">← Back to menu</button>
   </div>`;
-}
-
-function deckCard(deck: DeckSummary, selected: boolean): string {
-  const perk = deckPerkText(deck);
-  const sel = selected ? "cy-bd-rare cy-sel" : "";
-  return `
-  <button data-action="choose-deck" data-deck-id="${deck.id}"
-    class="cy-panel ${sel} flex flex-col gap-1 p-4 text-left transition hover:brightness-110">
-    <span class="font-display text-lg text-neon-pink neon-text">${escapeHtml(deck.name)}</span>
-    <span class="text-sm text-white/80">${escapeHtml(deck.description)}</span>
-    <span class="text-[11px] uppercase tracking-wide text-neon-cyan/80">${deck.size} cards${perk ? ` · ${perk}` : ""}</span>
-  </button>`;
 }
 
 function deckPerkText(deck: DeckSummary): string {
@@ -216,28 +249,6 @@ function deckPerkText(deck: DeckSummary): string {
   return parts.join(" · ");
 }
 
-// ---- difficulty ------------------------------------------------------------
-
-export function renderDifficultyPicker(deckName: string): string {
-  return menuShell(
-    "Choose difficulty",
-    `<div class="mb-3 text-center text-sm text-white/60">Deck: <span class="text-neon-cyan">${escapeHtml(deckName)}</span></div>
-     <div class="grid gap-3">
-       ${difficultyButton("easy", "Easy", "Gentler · 5 hands · 4 discards")}
-       ${difficultyButton("medium", "Medium", "Standard · 4 hands · 3 discards")}
-       ${difficultyButton("hard", "Hard", "Brutal · 3 hands · 2 discards")}
-     </div>`,
-  );
-}
-
-function difficultyButton(value: string, label: string, detail: string): string {
-  return `
-  <button data-action="choose-difficulty" data-difficulty="${value}"
-    class="cy-panel flex items-center justify-between gap-3 p-4 text-left transition hover:brightness-110">
-    <span class="font-display text-lg text-white">${label}</span>
-    <span class="text-right text-xs text-white/70">${detail}</span>
-  </button>`;
-}
 
 // ---- blind select ----------------------------------------------------------
 
@@ -457,10 +468,11 @@ export function renderBoard(
   selected: Set<string>,
   preview: ScoreBreakdown | null,
   pendingConsumable: { instanceId: string; def: Consumable } | null = null,
+  dealIds: Set<string> = new Set(),
 ): string {
   const scoring = new Set(preview?.scoringCardIds ?? []);
   const cardsHtml = run.hand
-    .map((c, i) => renderCard(c, selected.has(c.id), scoring.has(c.id), i))
+    .map((c, i) => renderCard(c, selected.has(c.id), scoring.has(c.id), i, dealIds.has(c.id)))
     .join("");
 
   // While picking targets for a consumable, hide play/discard so the only commit path
@@ -604,7 +616,7 @@ function renderPreviewLine(selectedCount: number, preview: ScoreBreakdown | null
   const handChips = preview.baseChips + preview.scoringChips;
   return `
   <div class="flex flex-col items-center gap-2">
-    <div class="font-display text-base font-bold text-neon-pink neon-text sm:text-lg">${preview.handLabel}${lvl}</div>
+    <div class="font-display text-base font-bold text-neon-lime neon-lime-text sm:text-lg">${preview.handLabel}${lvl}</div>
     <div class="flex items-center gap-2 sm:gap-3">
       <div class="cy-chip"><span class="k">Chips</span><span class="v">${handChips}</span></div>
       <span class="cy-times">×</span>
@@ -614,6 +626,11 @@ function renderPreviewLine(selectedCount: number, preview: ScoreBreakdown | null
 }
 
 function cardInner(card: Card): string {
+  if (card.faceDown) {
+    // Face-down card back (PET-83). No rank/suit/modifier badges leak through —
+    // the visual is a violet card-back tile with a neon "?" glyph.
+    return `<span class="cy-card__back" aria-hidden="true"><span class="cy-card__back-q">?</span></span>`;
+  }
   const rank = RANK_LABEL[card.rank];
   const suit = SUIT_SYMBOL[card.suit];
   return `<span class="r">${rank}</span><span class="p">${suit}</span><span class="r b">${rank}</span>${cardBadges(card)}`;
@@ -643,11 +660,19 @@ function cardEditionShimmer(card: Card): string {
   return "";
 }
 
-function renderCard(card: Card, selected: boolean, isScoring: boolean, index = 0): string {
+function renderCard(card: Card, selected: boolean, isScoring: boolean, index = 0, deal = false): string {
   const state = isScoring ? "cy-card--scoring" : selected ? "cy-card--sel" : "";
-  // Deal-in stagger (PET-77) + info-button for detail sheet (PET-85).
-  const delay = `--deal-delay:${index * 55}ms`;
-  return `<button data-action="toggle-card" data-card-id="${card.id}" class="cy-card card-deal card-hover-lift${cardEditionShimmer(card)} ${cardColor(card)} ${state}" style="${delay}">${cardInner(card)}<span class="cy-card__info" data-action="open-detail" data-detail-id="card:${card.id}" aria-label="Card details" role="button" tabindex="0">i</span></button>`;
+  // Deal-in stagger (PET-77) — applied ONLY to cards newly entering the hand. Re-rendering on
+  // every selection used to replay this on all cards, which read as the hand reshuffling.
+  const dealCls = deal ? " card-deal" : "";
+  const delay = deal ? `--deal-delay:${index * 55}ms` : "";
+  // Face-down (PET-83): still selectable (player can play a face-down card), but visually
+  // marked as a card-back. Skip the edition shimmer alias so it can't leak rank/edition info.
+  const faceDown = card.faceDown === true;
+  const fd = faceDown ? " cy-card--facedown" : "";
+  const shimmer = faceDown ? "" : cardEditionShimmer(card);
+  const tooltip = faceDown ? ' title="Face-down (boss effect)"' : "";
+  return `<button data-action="toggle-card" data-card-id="${card.id}" class="cy-card${dealCls} card-hover-lift${shimmer} ${cardColor(card)} ${state}${fd}" style="${delay}"${tooltip}>${cardInner(card)}<span class="cy-card__info" data-action="open-detail" data-detail-id="card:${card.id}" aria-label="Card details" role="button" tabindex="0">i</span></button>`;
 }
 
 // ---- play resolution (score animation) -------------------------------------
@@ -716,7 +741,11 @@ function jokerStepBadge(step: JokerStep): string {
 
 function renderPlayCard(card: Card, scored: boolean, popped: boolean): string {
   const state = popped ? "cy-card--pop" : scored ? "" : "cy-card--dim";
-  return `<div class="cy-card card-play-pop ${cardColor(card)} ${state}">${cardInner(card)}</div>`;
+  // PET-83: backend reveals face-down cards at score time (clears the faceDown flag in
+  // lastPlay). Defensively strip the flag here so the score animation never renders a
+  // card-back — if something slipped through, the reveal still happens visually.
+  const revealed: Card = card.faceDown ? { ...card, faceDown: false } : card;
+  return `<div class="cy-card card-play-pop ${cardColor(revealed)} ${state}">${cardInner(revealed)}</div>`;
 }
 
 // ---- shop ------------------------------------------------------------------
@@ -734,9 +763,14 @@ export function renderShop(run: RunStateDTO): string {
       : `Ante ${run.ante + 1} · Small Blind`;
   const voucherSlot = shop?.voucher ? renderShopVoucherSlot(shop.voucher, run.money) : "";
   // Slim shop HUD mirroring shop-pack.html .hud: "ANTE X/Y · NEXT <BLIND>" · Cashed-out chip · bright money on the right.
+  // The breakdown (base + $1/hand + interest) is surfaced as a hover title when the backend sends it.
+  const bd = run.pendingRewardBreakdown;
+  const cashedTitle = bd
+    ? ` title="Blind $${bd.blindBase} + hands $${bd.handsBonus} + interest $${bd.interest}"`
+    : "";
   const cashedChip =
     (run.pendingReward ?? 0) > 0
-      ? `<span class="cy-shop-hud__cashed">Cashed out +$${run.pendingReward}</span>`
+      ? `<span class="cy-shop-hud__cashed"${cashedTitle}>Cashed out +$${run.pendingReward}</span>`
       : "";
   return `
   <div class="${SCREEN} gap-4 p-3 sm:p-4 md:p-6">
@@ -1118,6 +1152,14 @@ export function renderDetailFor(detailId: string, run: RunStateDTO | null): stri
   if (kind === "card") {
     const c = run.hand.find((x) => x.id === id);
     if (!c) return null;
+    // Face-down (PET-83) — hide rank/suit/modifier info; revealed at score time.
+    if (c.faceDown) {
+      return renderDetailSheet({
+        title: "Face-down",
+        body: `<p class="text-[11px] uppercase tracking-widest text-neon-violet">Boss effect</p>
+               <p class="mt-1">Face-down — revealed at score time.</p>`,
+      });
+    }
     const suitName = c.suit.charAt(0).toUpperCase() + c.suit.slice(1);
     return renderDetailSheet({
       title: `${RANK_LABEL[c.rank]}${SUIT_SYMBOL[c.suit]} — ${suitName}`,

@@ -125,6 +125,27 @@ body::before {
   background: var(--color-neon-lime); box-shadow: 0 0 8px var(--color-neon-lime);
 }
 
+/* PET-62: network-status banner. Yellow while retrying, pink (clickable) when offline. */
+.cy-net-banner {
+  justify-content: center;
+  background: rgba(10, 7, 20, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  cursor: default;
+  pointer-events: auto;
+}
+.cy-statusbar--retrying {
+  color: #ffe066;
+  border-bottom: 1px solid rgba(255, 197, 61, 0.55);
+  box-shadow: 0 2px 12px rgba(255, 197, 61, 0.25);
+}
+.cy-statusbar--offline {
+  color: #ffd9ec;
+  border-bottom: 1px solid rgba(255, 46, 151, 0.6);
+  box-shadow: 0 2px 14px rgba(255, 46, 151, 0.35);
+  cursor: pointer;
+}
+
 /* angular clipped panels */
 .cy-panel {
   background: rgba(0, 229, 255, 0.05);
@@ -210,9 +231,50 @@ body::before {
 .cy-card--red { border-color: var(--color-neon-pink); box-shadow: 0 0 10px rgba(255, 46, 151, 0.28), inset 0 0 16px rgba(0, 0, 0, 0.6); }
 .cy-card--red .r, .cy-card--red .p { color: var(--color-neon-pink); }
 .cy-card--black .r, .cy-card--black .p { color: var(--color-neon-cyan); }
-.cy-card--sel { transform: translateY(-14px); border-color: var(--color-neon-lime); box-shadow: 0 0 0 1px var(--color-neon-lime), 0 0 22px rgba(140, 255, 91, 0.5); }
-.cy-card--scoring, .cy-card--pop { transform: translateY(-14px); border-color: var(--color-neon-pink); box-shadow: 0 0 0 1px var(--color-neon-pink), 0 0 22px rgba(255, 46, 151, 0.55); }
+/* Selected but NOT part of the scoring hand: just "picked" — small lift, neutral white ring. */
+.cy-card--sel { transform: translateY(-10px); border-color: #fff; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85), 0 0 16px rgba(255, 255, 255, 0.3); }
+/* Cards that form the poker hand to be played: lifted higher + lime ring (matches the hand name). */
+.cy-card--scoring { transform: translateY(-24px); border-color: var(--color-neon-lime); box-shadow: 0 0 0 2px var(--color-neon-lime), 0 0 26px rgba(140, 255, 91, 0.75); }
+.cy-card--pop { transform: translateY(-14px); border-color: var(--color-neon-pink); box-shadow: 0 0 0 1px var(--color-neon-pink), 0 0 22px rgba(255, 46, 151, 0.55); }
 .cy-card--dim { opacity: 0.4; }
+/* lime hand-name glow — ties the preview hand label to the lime scoring cards */
+.neon-lime-text { text-shadow: 0 0 6px var(--color-neon-lime), 0 0 18px rgba(140, 255, 91, 0.55); }
+/* big carousel arrows for the new-run deck selector */
+.cy-arrow { font-size: clamp(20px, 6vw, 30px); line-height: 1; color: var(--color-neon-cyan); padding: 8px 14px; border: 1px solid rgba(0, 229, 255, 0.4); background: rgba(0, 229, 255, 0.06); cursor: pointer; user-select: none; transition: filter 0.15s, background 0.15s, transform 0.1s; }
+.cy-arrow:hover { filter: brightness(1.3); background: rgba(0, 229, 255, 0.14); }
+.cy-arrow:active { transform: scale(0.92); }
+
+/* face-down card (PET-83) — boss-effect card-back. Violet gradient + cyan scanline
+   overlay + neon "?" glyph. Player can still select; visuals only. Iterating welcome. */
+.cy-card--facedown {
+  border-color: var(--color-neon-violet);
+  background:
+    linear-gradient(165deg, #2a0a4a, #100425 60%, #07021a);
+  box-shadow: 0 0 10px rgba(176, 38, 255, 0.35), inset 0 0 18px rgba(0, 0, 0, 0.7);
+}
+.cy-card--facedown .cy-card__back {
+  position: absolute;
+  inset: 4px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  border-radius: 4px;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0, 229, 255, 0.12) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, rgba(176, 38, 255, 0.1) 0 1px, transparent 1px 6px);
+  box-shadow: inset 0 0 14px rgba(176, 38, 255, 0.45);
+}
+.cy-card--facedown .cy-card__back-q {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.1rem, 4.5vw, 2rem);
+  color: var(--color-neon-cyan);
+  text-shadow:
+    0 0 6px var(--color-neon-cyan),
+    0 0 14px rgba(0, 229, 255, 0.6),
+    0 0 24px var(--color-neon-violet);
+}
+/* selected face-down still pops with the neutral white ring (consistent with other cards) */
+.cy-card--facedown.cy-card--sel { border-color: #fff; }
 
 /* chips × mult scoreboard */
 .cy-chip, .cy-mult {
