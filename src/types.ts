@@ -89,7 +89,11 @@ export type HandType =
   | "full_house"
   | "four_of_a_kind"
   | "straight_flush"
-  | "royal_flush";
+  | "royal_flush"
+  // Secret hands (PET-73) — reachable via planets / Wild cards. Backend sends levels for all 13.
+  | "five_of_a_kind"
+  | "flush_house"
+  | "flush_five";
 
 export type HandLevels = Record<HandType, number>;
 
@@ -125,6 +129,13 @@ export interface JokerView {
 export interface PlayResult {
   playedCardIds: string[];
   breakdown: ScoreBreakdown;
+}
+
+/** Cash-out reward components (PET-84) — each a non-negative $ amount summing to the payout. */
+export interface CashOutBreakdown {
+  blindBase: number;
+  handsBonus: number;
+  interest: number;
 }
 
 export interface User {
@@ -263,6 +274,8 @@ export interface RunStateDTO {
   status: RunStatus;
   lastPlay: PlayResult | null;
   pendingReward: number | null;
+  /** Cash-out components that sum to `pendingReward` (PET-84). Null until a blind is cleared. */
+  pendingRewardBreakdown: CashOutBreakdown | null;
   shop: ShopState | null;
   /** Foundation extensions (PET-67). Default to empty so existing runs keep working. */
   consumables: Consumable[];
