@@ -1,5 +1,7 @@
-/** Typed fetch wrappers. Native fetch, same-origin via the Vite proxy. Token passed per call. */
+/** Typed fetch wrappers. Native fetch, same-origin via the Vite proxy. Token passed per call.
+ *  Transport (timeout + retry/backoff + net-status state machine) lives in ./net.ts. */
 
+import { request } from "./net.ts";
 import type {
   DeckPeekDTO,
   DeckSummary,
@@ -8,31 +10,6 @@ import type {
   RunStateDTO,
   User,
 } from "./types.ts";
-
-interface RequestError extends Error {
-  status?: number;
-}
-
-async function request<T>(
-  url: string,
-  opts: { method?: string; token?: string | null; body?: unknown } = {},
-): Promise<T> {
-  const headers: Record<string, string> = {};
-  if (opts.body !== undefined) headers["Content-Type"] = "application/json";
-  if (opts.token) headers["Authorization"] = `Bearer ${opts.token}`;
-  const res = await fetch(url, {
-    method: opts.method ?? "GET",
-    headers,
-    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
-  });
-  if (!res.ok) {
-    const data = (await res.json().catch(() => null)) as { message?: string } | null;
-    const err: RequestError = new Error(data?.message ?? `Request failed (${res.status})`);
-    err.status = res.status;
-    throw err;
-  }
-  return (await res.json()) as T;
-}
 
 export const login = (name: string) =>
   request<{ token: string; user: User }>("/api/auth/login", { method: "POST", body: { name } });

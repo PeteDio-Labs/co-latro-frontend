@@ -125,6 +125,27 @@ body::before {
   background: var(--color-neon-lime); box-shadow: 0 0 8px var(--color-neon-lime);
 }
 
+/* PET-62: network-status banner. Yellow while retrying, pink (clickable) when offline. */
+.cy-net-banner {
+  justify-content: center;
+  background: rgba(10, 7, 20, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  cursor: default;
+  pointer-events: auto;
+}
+.cy-statusbar--retrying {
+  color: #ffe066;
+  border-bottom: 1px solid rgba(255, 197, 61, 0.55);
+  box-shadow: 0 2px 12px rgba(255, 197, 61, 0.25);
+}
+.cy-statusbar--offline {
+  color: #ffd9ec;
+  border-bottom: 1px solid rgba(255, 46, 151, 0.6);
+  box-shadow: 0 2px 14px rgba(255, 46, 151, 0.35);
+  cursor: pointer;
+}
+
 /* angular clipped panels */
 .cy-panel {
   background: rgba(0, 229, 255, 0.05);
