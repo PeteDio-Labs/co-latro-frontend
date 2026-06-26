@@ -80,6 +80,11 @@ jobs:
     env:
       COMPOSE: docker compose -f e2e/stack/docker-compose.yml
       E2E_BASE_URL: http://localhost:8080
+      # Run Playwright inside its official image (browsers + system deps preinstalled) so we
+      # never shell out to `playwright install --with-deps` (that runs `sudo apt-get`, and the
+      # homelab runner has no passwordless sudo). MUST match the installed @playwright/test
+      # version (package.json) — bump both together.
+      PW_IMAGE: mcr.microsoft.com/playwright:v1.60.0-jammy
     steps:
       - uses: actions/checkout@v4
 
@@ -118,12 +123,24 @@ jobs:
           $COMPOSE logs --no-color
           exit 1
 
-      # Playwright ships only the npm package; the chromium binary is installed on demand.
-      - name: Install Playwright chromium
-        run: bunx playwright install --with-deps chromium
-
-      - name: E2E smoke (Playwright)
-        run: bun run e2e
+      # Run the smoke inside the official Playwright container — it ships chromium + every
+      # system library, so there's NO `playwright install --with-deps` (which needs sudo the
+      # runner doesn't have). Joined to the host network so http://localhost:8080 (the same
+      # endpoint the wait step polled) resolves to the compose-published nginx. `--ipc=host`
+      # gives chromium a real /dev/shm — the default 64MB segfaults it (SIGSEGV). `npx` runs
+      # the TS config/specs via Playwright's own loader, so no bun is needed inside the image;
+      # node_modules (incl. @playwright/test) come from the bun install above via the mount.
+      - name: E2E smoke (Playwright container)
+        run: |
+          docker run --rm \
+            --network host \
+            --ipc=host \
+            -e E2E_BASE_URL="$E2E_BASE_URL" \
+            -e CI=1 \
+            -v "$PWD":/work \
+            -w /work \
+            "$PW_IMAGE" \
+            npx playwright test --config e2e/playwright.config.ts
 
       # Diagnostics on failure: container logs make a red e2e debuggable without a re-run.
       - name: Stack logs (on failure)

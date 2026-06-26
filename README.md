@@ -36,20 +36,28 @@ Two layers (PET-66):
 
 - **Playwright E2E smoke** (`e2e/smoke.spec.ts`) — sign-in → start run → play a hand → reach the
   shop, against the docker-compose stack at `http://localhost:8080` (override with
-  `E2E_BASE_URL=...`). The browser binary is installed on demand.
+  `E2E_BASE_URL=...`).
   ```bash
+  bun install                                    # node_modules incl. @playwright/test
   bun run build                                  # nginx serves dist/, so build first
   docker compose -f e2e/stack/docker-compose.yml up -d
-  bunx playwright install --with-deps chromium   # first run only
-  bun run e2e
+
+  # Run the smoke inside the official Playwright image (browsers + system deps baked in —
+  # no `playwright install --with-deps`, which needs sudo). Match the tag to @playwright/test.
+  docker run --rm --network host --ipc=host \
+    -e E2E_BASE_URL=http://localhost:8080 -v "$PWD":/work -w /work \
+    mcr.microsoft.com/playwright:v1.60.0-jammy \
+    npx playwright test --config e2e/playwright.config.ts
+
   docker compose -f e2e/stack/docker-compose.yml down -v
   ```
-  The stack (`e2e/stack/docker-compose.yml`) is ephemeral Postgres + the backend image + nginx
-  serving `dist/` and proxying `/api` — the same same-origin shape as production. The backend
-  image defaults to the Nexus-published `:latest`; set `BACKEND_IMAGE` to a locally-built tag to
-  run off the network.
+  Or, if you already have chromium + its runtime libs locally, just `bun run e2e` against the
+  running stack. The stack (`e2e/stack/docker-compose.yml`) is ephemeral Postgres + the backend
+  image + nginx serving `dist/` and proxying `/api` — the same same-origin shape as production.
+  The backend image defaults to the Nexus-published `:latest`; set `BACKEND_IMAGE` to a
+  locally-built tag to run off the network.
   CI gate (PET-98): the `e2e` job in `.github/workflows/ci.yml` stands this stack up on the
-  homelab runner and runs the smoke on every PR.
+  homelab runner and runs the smoke (in the Playwright container) on every PR.
 
 ## What's here
 
