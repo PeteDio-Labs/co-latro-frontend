@@ -1,7 +1,7 @@
 /** Playwright config for the Co-latro E2E smoke (PET-66).
  *  Target stack must be reachable at E2E_BASE_URL (default http://localhost:8080) — the
  *  docker compose stack (backend + nginx serving dist/) is the canonical local target.
- *  CI gating is deferred until a workflow can stand the stack up in-job. */
+ *  PET-98: the ci.yml `e2e` job stands that stack up in-job and gates PRs. */
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
