@@ -1,0 +1,72 @@
+# Co-latro E2E stack (PET-98) — the backend + nginx the Playwright smoke runs against.
+#
+# Stands up the same same-origin shape as production (nginx serves dist/ and reverse-proxies
+# /api to the backend) but self-contained for a throwaway test run, reachable at
+# http://localhost:8080 — exactly what e2e/playwright.config.ts defaults E2E_BASE_URL to.
+#
+# Services:
+#   postgres  ephemeral Postgres 17 (the backend runs Drizzle migrations against it on boot).
+#             NOT the live .231 DB — a disposable container, gone with `compose down -v`.
+#   backend   the co-latro-backend image. Defaults to the Nexus-published :latest
+#             (docker.pdlab.dev/co-latro-backend:latest, what ci.yml pushes on merge); the
+#             homelab runner can pull it. Override BACKEND_IMAGE to a locally-built tag to run
+#             this stack off the network (e.g. build ../../../backend and pass that tag).
+#   nginx     serves the host's dist/ (built by `bun run build`) and proxies /api → backend,
+#             published on host :8080.
+#
+# Usage (from repo root):
+#   bun run build                                  # produce dist/ first
+#   docker compose -f e2e/stack/docker-compose.yml up -d
+#   # poll http://localhost:8080/api/health until UP, then: bun run e2e
+#   docker compose -f e2e/stack/docker-compose.yml down -v
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: colatro
+    # No host port published — only the backend talks to it, over the compose network.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d colatro"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: ${BACKEND_IMAGE:-docker.pdlab.dev/co-latro-backend:latest}
+    environment:
+      PORT: "3020"
+      NODE_ENV: production
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/colatro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Not published to the host: the browser reaches it only via nginx /api (same-origin).
+    expose:
+      - "3020"
+    # The image is bun:slim (no curl/wget); use bun's fetch to poll the in-app /health route
+    # (src/app.ts → {status:"UP"}), so nginx only starts once migrations are applied + listening.
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "await fetch('http://localhost:3020/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    volumes:
+      # The static build (produced by `bun run build`) and the e2e server config.
+      - ../../dist:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro

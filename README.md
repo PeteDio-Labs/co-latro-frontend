@@ -38,11 +38,18 @@ Two layers (PET-66):
   shop, against the docker-compose stack at `http://localhost:8080` (override with
   `E2E_BASE_URL=...`). The browser binary is installed on demand.
   ```bash
+  bun run build                                  # nginx serves dist/, so build first
+  docker compose -f e2e/stack/docker-compose.yml up -d
   bunx playwright install --with-deps chromium   # first run only
   bun run e2e
+  docker compose -f e2e/stack/docker-compose.yml down -v
   ```
-  **Not yet in CI** — gating it needs the backend + nginx (serving `dist/`) stood up inside the
-  workflow. Tracked as a follow-up to PET-66.
+  The stack (`e2e/stack/docker-compose.yml`) is ephemeral Postgres + the backend image + nginx
+  serving `dist/` and proxying `/api` — the same same-origin shape as production. The backend
+  image defaults to the Nexus-published `:latest`; set `BACKEND_IMAGE` to a locally-built tag to
+  run off the network.
+  CI gate (PET-98): the `e2e` job in `.github/workflows/ci.yml` stands this stack up on the
+  homelab runner and runs the smoke on every PR.
 
 ## What's here
 

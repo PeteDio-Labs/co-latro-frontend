@@ -34,8 +34,7 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
-      # PET-66 — vitest gate (unit). Playwright E2E (e2e/) is scaffolded but not yet wired
-      # into CI: it needs the backend + nginx stack stood up in-job, deferred to a follow-up.
+      # PET-66 — vitest gate (unit).
       - name: Test (vitest)
         run: bun run test
 
@@ -70,3 +69,68 @@ jobs:
         env:
           MINIO_BUCKET: co-latro-frontend
         run: ./scripts/deploy.sh
+
+  # PET-98 — Playwright E2E smoke gate. Stands the backend + nginx stack up in-job (docker
+  # compose: ephemeral Postgres + the Nexus-published backend image + nginx serving a fresh
+  # dist/) at http://localhost:8080, then runs the smoke against it. Gates PRs like vitest:
+  # a separate job, so it shows as its own required check and a flaky e2e can't be confused
+  # with a typecheck/unit failure. Runs on the in-homelab runner so it can pull from Nexus.
+  e2e:
+    runs-on: [self-hosted, linux, x64, homelab]
+    env:
+      COMPOSE: docker compose -f e2e/stack/docker-compose.yml
+      E2E_BASE_URL: http://localhost:8080
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      # The smoke runs against the real static build that nginx serves (dist/ is bind-mounted
+      # into the nginx container by the compose file).
+      - name: Build (dist/ for nginx)
+        run: bun run build
+
+      # Pull the latest published backend image, then bring the stack up. The compose file
+      # defaults backend to docker.pdlab.dev/co-latro-backend:latest (what the backend repo's
+      # ci.yml pushes on merge); the homelab runner can reach Nexus.
+      - name: Stack up (postgres + backend + nginx)
+        run: |
+          $COMPOSE pull --quiet
+          $COMPOSE up -d
+
+      # Compose's healthchecks already gate startup ordering (nginx waits for a healthy
+      # backend, which waits for a healthy postgres). Re-confirm the same-origin endpoint the
+      # browser will hit is actually serving before launching Playwright.
+      - name: Wait for stack health (http://localhost:8080)
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS -o /dev/null "$E2E_BASE_URL/"; then
+              echo "nginx serving the app shell — stack is up."
+              exit 0
+            fi
+            echo "waiting for $E2E_BASE_URL ... ($i/60)"
+            sleep 2
+          done
+          echo "::error::stack did not become healthy at $E2E_BASE_URL within timeout"
+          $COMPOSE ps
+          $COMPOSE logs --no-color
+          exit 1
+
+      # Playwright ships only the npm package; the chromium binary is installed on demand.
+      - name: Install Playwright chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: E2E smoke (Playwright)
+        run: bun run e2e
+
+      # Diagnostics on failure: container logs make a red e2e debuggable without a re-run.
+      - name: Stack logs (on failure)
+        if: failure()
+        run: $COMPOSE logs --no-color
+
+      # Always tear the stack down (and its volumes) so the runner is left clean.
+      - name: Stack down
+        if: always()
+        run: $COMPOSE down -v --remove-orphans
