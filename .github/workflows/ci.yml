@@ -142,6 +142,17 @@ jobs:
             "$PW_IMAGE" \
             npx playwright test --config e2e/playwright.config.ts
 
+      # The Playwright container above runs as ROOT and writes test-results/ (+ any report)
+      # as root into the bind-mounted checkout. The NEXT run's actions/checkout `git clean`
+      # runs as the non-root runner user, can't delete root-owned files, and wedges the runner
+      # (every subsequent run fails at checkout). Reclaim ownership via a root container so the
+      # workspace stays cleanable. if:always() so it runs even when the smoke fails.
+      - name: Reclaim workspace ownership (Playwright container writes as root)
+        if: always()
+        run: |
+          docker run --rm -v "$PWD":/work -w /work "$PW_IMAGE" \
+            chown -R "$(id -u):$(id -g)" . || true
+
       # Diagnostics on failure: container logs make a red e2e debuggable without a re-run.
       - name: Stack logs (on failure)
         if: failure()
