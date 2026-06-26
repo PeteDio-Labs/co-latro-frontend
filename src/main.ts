@@ -2,7 +2,7 @@
 
 import "./styles.css";
 import * as api from "./api.ts";
-import { setManualRetryHandler, subscribeNet, type NetStatus } from "./net.ts";
+import { setManualRetryHandler, setUnauthorizedHandler, subscribeNet, type NetStatus } from "./net.ts";
 import { registerServiceWorker } from "./sw-register.ts";
 import { showToast } from "./toast.ts";
 import {
@@ -186,6 +186,8 @@ async function signIn(): Promise<void> {
   }
 }
 
+/** Clear all client-side auth/run state and return to sign-in. Pure local reset — used both by
+ *  the user "Sign Out" action and by the 401 handler (where the token is already dead). */
 function signOut(): void {
   localStorage.removeItem(TOKEN_KEY);
   state.token = null;
@@ -200,6 +202,14 @@ function signOut(): void {
   state.pendingConsumable = null;
   state.packPicks.clear();
   render();
+}
+
+/** PET-60: user-initiated sign-out. Best-effort server-side token invalidation (fire-and-forget;
+ *  a failure here must not block leaving), then clear locally. */
+function userSignOut(): void {
+  const token = state.token;
+  if (token) void api.logout(token).catch(() => {});
+  signOut();
 }
 
 // ---- new-run: deck carousel + difficulty → run ----
@@ -682,7 +692,7 @@ app.addEventListener("click", (event) => {
     : (fn: () => Promise<void> | void) => void fn();
   switch (action) {
     case "signin": guard(signIn); break;
-    case "signout": signOut(); break;
+    case "signout": userSignOut(); break;
     case "goto-play": void gotoPlay(); break;
     case "goto-settings": goMenu("settings"); break;
     case "goto-options": goMenu("options"); break;
@@ -775,6 +785,15 @@ setManualRetryHandler(() => {
   // status to "retrying" while in flight and to "online" on success (which fires the
   // subscribeNet handler above and re-renders).
   void reconcileFromServer();
+});
+
+// PET-60: the server rejected our token (expired / logged out / invalid). Clear it and drop
+// back to sign-in so the player can re-login. Guarded so we only act + toast once per logout
+// (an in-flight burst of requests can each 401 before the screen swaps).
+setUnauthorizedHandler(() => {
+  if (!state.token) return; // already cleared — ignore the rest of the 401 burst
+  signOut();
+  showToast("Session expired — please sign in again", "error");
 });
 // PWA: register the service worker on production-like origins (skips the Vite dev server). (PET-63)
 registerServiceWorker();

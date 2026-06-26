@@ -16,6 +16,11 @@ export const login = (name: string) =>
 
 export const me = (token: string) => request<{ user: User }>("/api/auth/me", { token });
 
+/** PET-60: invalidate the current token server-side. 204 No Content (request() tolerates an
+ *  empty body). Best-effort — the client clears its token regardless of the outcome. */
+export const logout = (token: string) =>
+  request<void>("/api/auth/logout", { method: "POST", token });
+
 export const listDecks = (token: string) =>
   request<{ decks: DeckSummary[] }>("/api/decks", { token });
 
