@@ -47,6 +47,17 @@ export function setManualRetryHandler(fn: () => void): void {
   manualRetryHandler = fn;
 }
 
+// ---- unauthorized (401) handler (PET-60) ----------------------------------
+
+let unauthorizedHandler: (() => void) | null = null;
+
+/** main.ts registers what to do when the server rejects our token (401): clear the stored
+ *  token and drop back to sign-in. Fired once per 401 response, before the error is rethrown
+ *  so existing per-call catches still run (they'll just show a toast over the sign-in screen). */
+export function setUnauthorizedHandler(fn: () => void): void {
+  unauthorizedHandler = fn;
+}
+
 function ensureBanner(): HTMLDivElement {
   if (bannerEl) return bannerEl;
   const el = document.createElement("div");
@@ -149,10 +160,17 @@ export async function request<T>(url: string, opts: RequestOpts = {}): Promise<T
         const data = (await res.json().catch(() => null)) as { message?: string } | null;
         const err: RequestError = new Error(data?.message ?? `Request failed (${res.status})`);
         err.status = res.status;
+        // PET-60: an authenticated request rejected with 401 means our token is dead (expired,
+        // logged out, or invalid). Notify the app to clear it + re-login. Guarded on opts.token
+        // so the unauthenticated login call can never trigger a re-login loop.
+        if (res.status === 401 && opts.token && unauthorizedHandler) unauthorizedHandler();
         throw err;
       }
       // Success — clear any retrying/offline state.
       if (status !== "online") setStatus("online");
+      // 204 No Content (or any empty body, e.g. logout) → resolve with undefined rather than
+      // letting res.json() throw on the empty payload.
+      if (res.status === 204) return undefined as T;
       return (await res.json()) as T;
     } catch (err) {
       lastErr = err;
