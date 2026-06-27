@@ -83,6 +83,12 @@ export function pickMove(
 /** Play through the board in the real UI until the run reaches the shop or can no longer act. */
 export async function driveToShop(page: Page, maxMoves = 14): Promise<any> {
   for (let i = 0; i < maxMoves; i++) {
+    // Wait out any in-flight score animation before reading state / clicking — a card mid-tally
+    // carries `.cy-card--scoring` and never reaches Playwright's "stable" gate, which flaked the
+    // toggle-card click on slower CI runners. Poll until no card is animating (best-effort).
+    await page
+      .waitForFunction(() => document.querySelectorAll(".cy-card--scoring").length === 0, { timeout: 8000 })
+      .catch(() => {});
     const run = await getRun(page);
     if (!run || run.status !== "playing") return run;
     const move = pickMove(run.hand, run.discardsRemaining);
@@ -90,8 +96,9 @@ export async function driveToShop(page: Page, maxMoves = 14): Promise<any> {
       await page.click(`button[data-action="toggle-card"][data-card-id="${id}"]`);
     }
     await page.click(`button[data-action="${move.action}"]`);
-    // a play triggers the score animation (~2s); a discard re-renders quickly
-    await page.waitForTimeout(move.action === "play" ? 2600 : 400);
+    // a play triggers the score animation (~2s); a discard re-renders quickly. The loop-top wait
+    // above is the real guard; this just lets the play kick off before we re-read.
+    await page.waitForTimeout(move.action === "play" ? 1200 : 300);
   }
   return await getRun(page);
 }
