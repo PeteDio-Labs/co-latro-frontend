@@ -22,13 +22,17 @@ export async function getRun(page: Page): Promise<any> {
   return (await res.json()).run;
 }
 
+// PET-206: create a fresh credentialed account each run. The invite link (?invite=) puts the
+// auth screen into signup mode; the e2e stack runs the invite gate OFF (COLATRO_ALLOW_OPEN_SIGNUP),
+// so the code value is accepted without a real admin claim.
 export async function signIn(page: Page): Promise<string> {
-  await page.goto("/");
-  const callsign = `e2e-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
-  await page.fill('input[id="name-input"]', callsign);
-  await page.click('button[data-action="signin"]');
+  await page.goto("/?invite=e2e");
+  const username = `e2e-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
+  await page.fill('input[id="name-input"]', username);
+  await page.fill('input[id="password-input"]', "e2e-password-123");
+  await page.click('button[data-action="signup"]');
   await expect(page.locator('button[data-action="goto-play"]')).toBeVisible({ timeout: 10000 });
-  return callsign;
+  return username;
 }
 
 /** From the main menu: open the new-run screen, optionally cycle the deck carousel, pick a
