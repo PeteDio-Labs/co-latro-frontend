@@ -105,9 +105,14 @@ export function renderSignIn(): string {
         <input id="name-input" type="text" maxlength="40" placeholder="callsign" autocomplete="off"
           class="flex-1 min-w-0 bg-transparent outline-none text-white font-display font-bold tracking-wide text-lg placeholder-white/30" />
       </div>
+      <div class="flex items-center gap-2 border border-white/20 bg-black/40 px-3 py-3">
+        <span class="font-display font-bold text-neon-gold">⊕</span>
+        <input id="invite-input" type="text" maxlength="64" placeholder="invite code" autocomplete="off"
+          class="flex-1 min-w-0 bg-transparent outline-none text-white font-display font-bold tracking-wide text-lg placeholder-white/30" />
+      </div>
       <button data-action="signin" class="cy-btn cy-btn--go w-full">Sign In ▸</button>
     </div>
-    <p class="text-[11px] tracking-[0.14em] uppercase text-white/60 text-center">No password — your <span class="text-neon-gold">callsign</span> is your account</p>
+    <p class="text-[11px] tracking-[0.14em] uppercase text-white/60 text-center">No password — your <span class="text-neon-gold">callsign</span> is your account. New here? Enter your <span class="text-neon-gold">invite code</span>.</p>
   </div>`;
 }
 

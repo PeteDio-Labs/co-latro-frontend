@@ -173,8 +173,10 @@ async function boot(): Promise<void> {
 async function signIn(): Promise<void> {
   const name = document.querySelector<HTMLInputElement>("#name-input")?.value.trim();
   if (!name) return;
+  // PET-59: only send the invite code when the field is filled (existing users sign in without).
+  const inviteCode = document.querySelector<HTMLInputElement>("#invite-input")?.value.trim() || undefined;
   try {
-    const { token, user } = await api.login(name);
+    const { token, user } = await api.login(name, inviteCode);
     state.token = token;
     state.user = user;
     localStorage.setItem(TOKEN_KEY, token);
@@ -733,8 +735,9 @@ app.addEventListener("click", (event) => {
 });
 
 app.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" && (event.target as HTMLElement).id === "name-input") {
-    void signIn();
+  if (event.key === "Enter") {
+    const id = (event.target as HTMLElement).id;
+    if (id === "name-input" || id === "invite-input") void signIn();
   }
 });
 

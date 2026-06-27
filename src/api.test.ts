@@ -33,6 +33,15 @@ describe("api.login", () => {
     expect(headers["Content-Type"]).toBe("application/json");
     expect((opts as RequestInit).body).toBe(JSON.stringify({ name: "tester" }));
   });
+
+  test("includes inviteCode in the body when provided (PET-59)", async () => {
+    const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse({ token: "tk", user: { id: "u1", name: "tester" } }),
+    );
+    await api.login("tester", "let-me-in");
+    const [, opts] = spy.mock.calls[0]!;
+    expect((opts as RequestInit).body).toBe(JSON.stringify({ name: "tester", inviteCode: "let-me-in" }));
+  });
 });
 
 describe("api.me", () => {

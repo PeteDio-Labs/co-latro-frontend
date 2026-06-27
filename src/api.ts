@@ -11,8 +11,14 @@ import type {
   User,
 } from "./types.ts";
 
-export const login = (name: string) =>
-  request<{ token: string; user: User }>("/api/auth/login", { method: "POST", body: { name } });
+// PET-59: prealpha invite gate. A new account needs an invite code; existing users sign in
+// with just their callsign (the backend never gates an existing user), so inviteCode is only
+// sent when the field is filled in.
+export const login = (name: string, inviteCode?: string) =>
+  request<{ token: string; user: User }>("/api/auth/login", {
+    method: "POST",
+    body: inviteCode ? { name, inviteCode } : { name },
+  });
 
 export const me = (token: string) => request<{ user: User }>("/api/auth/me", { token });
 
