@@ -39,6 +39,11 @@ services:
       PORT: "3020"
       NODE_ENV: production
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/colatro
+      # PET-204/F8: the backend now refuses to boot in production with the invite gate
+      # unconfigured (fail-closed against the open-signup footgun). This throwaway stack has no
+      # admin invites service and the e2e signs in without a code, so opt into open signup
+      # explicitly — exactly the escape hatch F8 provides.
+      COLATRO_ALLOW_OPEN_SIGNUP: "1"
     depends_on:
       postgres:
         condition: service_healthy
