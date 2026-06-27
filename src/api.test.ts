@@ -17,12 +17,12 @@ afterEach(() => {
   setUnauthorizedHandler(() => {}); // reset any handler a test installed
 });
 
-describe("api.login", () => {
-  test("POSTs to /api/auth/login with a JSON body", async () => {
+describe("api.login (PET-206)", () => {
+  test("POSTs /api/auth/login with username + password", async () => {
     const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       jsonResponse({ token: "tk", user: { id: "u1", name: "tester" } }),
     );
-    const result = await api.login("tester");
+    const result = await api.login("tester", "s3cret-password");
     expect(result.token).toBe("tk");
     expect(result.user.name).toBe("tester");
     expect(spy).toHaveBeenCalledTimes(1);
@@ -31,16 +31,22 @@ describe("api.login", () => {
     expect((opts as RequestInit).method).toBe("POST");
     const headers = (opts as RequestInit).headers as Record<string, string>;
     expect(headers["Content-Type"]).toBe("application/json");
-    expect((opts as RequestInit).body).toBe(JSON.stringify({ name: "tester" }));
+    expect((opts as RequestInit).body).toBe(JSON.stringify({ username: "tester", password: "s3cret-password" }));
   });
+});
 
-  test("includes inviteCode in the body when provided (PET-59)", async () => {
+describe("api.signup (PET-206)", () => {
+  test("POSTs /api/auth/signup with username + password + inviteCode", async () => {
     const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       jsonResponse({ token: "tk", user: { id: "u1", name: "tester" } }),
     );
-    await api.login("tester", "let-me-in");
-    const [, opts] = spy.mock.calls[0]!;
-    expect((opts as RequestInit).body).toBe(JSON.stringify({ name: "tester", inviteCode: "let-me-in" }));
+    const result = await api.signup("tester", "s3cret-password", "let-me-in");
+    expect(result.token).toBe("tk");
+    const [url, opts] = spy.mock.calls[0]!;
+    expect(url).toBe("/api/auth/signup");
+    expect((opts as RequestInit).body).toBe(
+      JSON.stringify({ username: "tester", password: "s3cret-password", inviteCode: "let-me-in" }),
+    );
   });
 });
 
@@ -128,7 +134,7 @@ describe("401 → unauthorized handler (PET-60)", () => {
     const onUnauthorized = vi.fn();
     setUnauthorizedHandler(onUnauthorized);
 
-    await expect(api.login("x")).rejects.toThrow();
+    await expect(api.login("x", "pw")).rejects.toThrow();
     expect(onUnauthorized).not.toHaveBeenCalled();
   });
 

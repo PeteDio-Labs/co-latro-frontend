@@ -79,12 +79,19 @@ describe("renderSignIn", () => {
     expect(renderSignIn()).toContain('data-action="signin"');
   });
 
-  test("contains the callsign input field", () => {
-    expect(renderSignIn()).toContain('id="name-input"');
+  test("contains the username + password input fields (PET-206)", () => {
+    const html = renderSignIn();
+    expect(html).toContain('id="name-input"');
+    expect(html).toContain('id="password-input"');
   });
 
-  test("contains the invite-code input field (PET-59)", () => {
-    expect(renderSignIn()).toContain('id="invite-input"');
+  test("signup mode shows the invite-code field + create-account hook, prefilled (PET-206)", () => {
+    const html = renderSignIn("signup", "abc123");
+    expect(html).toContain('id="invite-input"');
+    expect(html).toContain('value="abc123"');
+    expect(html).toContain('data-action="signup"');
+    // login mode (default) does NOT show the invite field
+    expect(renderSignIn()).not.toContain('id="invite-input"');
   });
 });
 

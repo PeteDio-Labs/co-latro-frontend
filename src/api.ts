@@ -11,13 +11,18 @@ import type {
   User,
 } from "./types.ts";
 
-// PET-59: prealpha invite gate. A new account needs an invite code; existing users sign in
-// with just their callsign (the backend never gates an existing user), so inviteCode is only
-// sent when the field is filled in.
-export const login = (name: string, inviteCode?: string) =>
+// PET-206: credentialed auth. Returning users log in with username + password. New accounts are
+// created via signup, which needs an admin-issued invite code (the prealpha gate).
+export const login = (username: string, password: string) =>
   request<{ token: string; user: User }>("/api/auth/login", {
     method: "POST",
-    body: inviteCode ? { name, inviteCode } : { name },
+    body: { username, password },
+  });
+
+export const signup = (username: string, password: string, inviteCode: string) =>
+  request<{ token: string; user: User }>("/api/auth/signup", {
+    method: "POST",
+    body: { username, password, inviteCode },
   });
 
 export const me = (token: string) => request<{ user: User }>("/api/auth/me", { token });

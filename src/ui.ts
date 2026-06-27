@@ -93,26 +93,49 @@ function statusBar(left: string, right = `<span class="cy-online">Online · v0.5
 
 // ---- auth + menu -----------------------------------------------------------
 
-export function renderSignIn(): string {
+/** PET-206: credentialed auth. `signup` mode (reached via an invite link) collects username +
+ *  password + the prefilled invite code; `login` mode collects username + password. */
+export function renderSignIn(mode: "login" | "signup" = "login", invite = ""): string {
+  const isSignup = mode === "signup";
+  const usernameField = `
+      <div class="flex items-center gap-2 border border-white/20 bg-black/40 px-3 py-3">
+        <span class="font-display font-bold text-neon-cyan">&gt;</span>
+        <input id="name-input" type="text" maxlength="40" placeholder="username" autocomplete="username"
+          class="flex-1 min-w-0 bg-transparent outline-none text-white font-display font-bold tracking-wide text-lg placeholder-white/30" />
+      </div>`;
+  const passwordField = `
+      <div class="flex items-center gap-2 border border-white/20 bg-black/40 px-3 py-3">
+        <span class="font-display font-bold text-neon-pink">⚷</span>
+        <input id="password-input" type="password" maxlength="200" placeholder="password"
+          autocomplete="${isSignup ? "new-password" : "current-password"}"
+          class="flex-1 min-w-0 bg-transparent outline-none text-white font-display font-bold tracking-wide text-lg placeholder-white/30" />
+      </div>`;
+  const inviteFieldHtml = `
+      <div class="flex items-center gap-2 border border-white/20 bg-black/40 px-3 py-3">
+        <span class="font-display font-bold text-neon-gold">⊕</span>
+        <input id="invite-input" type="text" maxlength="64" placeholder="invite code" autocomplete="off"
+          value="${escapeHtml(invite)}"
+          class="flex-1 min-w-0 bg-transparent outline-none text-white font-display font-bold tracking-wide text-lg placeholder-white/30" />
+      </div>`;
+  const heading = isSignup ? "Create Account // Invite Required" : "Sign In // Operator Login";
+  const cta = isSignup
+    ? `<button data-action="signup" class="cy-btn cy-btn--go w-full">Create Account ▸</button>`
+    : `<button data-action="signin" class="cy-btn cy-btn--go w-full">Sign In ▸</button>`;
+  const toggle = isSignup
+    ? `Already have an account? <button data-action="show-signin" class="text-neon-cyan underline underline-offset-2">Sign in</button>`
+    : `Have an invite link? <button data-action="show-signup" class="text-neon-gold underline underline-offset-2">Create an account</button>`;
   return `
   <div class="cy-screen flex flex-col items-center justify-center gap-6 p-4 sm:p-6">
     <div class="cy-statusbar cy-statusbar--top w-full max-w-md justify-center">Arcade Terminal // auth required</div>
     <h1 class="cy-title text-center">MINI BALATRO</h1>
     <div class="cy-panel w-full max-w-md p-5 sm:p-6 flex flex-col gap-3">
-      <div class="font-display text-[11px] tracking-[0.3em] uppercase text-neon-cyan">Identify // Enter Callsign</div>
-      <div class="flex items-center gap-2 border border-white/20 bg-black/40 px-3 py-3">
-        <span class="font-display font-bold text-neon-cyan">&gt;</span>
-        <input id="name-input" type="text" maxlength="40" placeholder="callsign" autocomplete="off"
-          class="flex-1 min-w-0 bg-transparent outline-none text-white font-display font-bold tracking-wide text-lg placeholder-white/30" />
-      </div>
-      <div class="flex items-center gap-2 border border-white/20 bg-black/40 px-3 py-3">
-        <span class="font-display font-bold text-neon-gold">⊕</span>
-        <input id="invite-input" type="text" maxlength="64" placeholder="invite code" autocomplete="off"
-          class="flex-1 min-w-0 bg-transparent outline-none text-white font-display font-bold tracking-wide text-lg placeholder-white/30" />
-      </div>
-      <button data-action="signin" class="cy-btn cy-btn--go w-full">Sign In ▸</button>
+      <div class="font-display text-[11px] tracking-[0.3em] uppercase text-neon-cyan">${heading}</div>
+      ${usernameField}
+      ${passwordField}
+      ${isSignup ? inviteFieldHtml : ""}
+      ${cta}
     </div>
-    <p class="text-[11px] tracking-[0.14em] uppercase text-white/60 text-center">No password — your <span class="text-neon-gold">callsign</span> is your account. New here? Enter your <span class="text-neon-gold">invite code</span>.</p>
+    <p class="text-[11px] tracking-[0.14em] uppercase text-white/60 text-center">${toggle}</p>
   </div>`;
 }
 

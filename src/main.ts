@@ -59,10 +59,17 @@ interface ClientState {
   pendingConsumable: { instanceId: string; def: Consumable } | null;
   /** PET-70: ids picked inside the booster-pack opener. Cleared on every status change. */
   packPicks: Set<string>;
+  /** PET-206: which auth form to show when signed out. Defaults to signup when the URL carries an
+   *  invite code (an invite link), else login. */
+  authMode: "login" | "signup";
 }
+
+/** PET-206: the invite code from the share link (?invite=<code>), read once at boot. */
+const inviteFromUrl = new URLSearchParams(location.search).get("invite") ?? "";
 
 const state: ClientState = {
   token: localStorage.getItem(TOKEN_KEY),
+  authMode: inviteFromUrl ? "signup" : "login",
   user: null,
   run: null,
   selected: new Set(),
@@ -91,7 +98,7 @@ function hasActiveRun(): boolean {
 
 function screenHtml(dealIds: Set<string>): string {
   if (state.anim) return renderPlayResolution(state.anim);
-  if (!state.user) return renderSignIn();
+  if (!state.user) return renderSignIn(state.authMode, inviteFromUrl);
   if (state.menuView === "menu") return renderMainMenu(state.user, hasActiveRun() ? state.run : null);
   if (state.menuView === "settings") return renderSettings(state.user);
   if (state.menuView === "options") return renderOptions();
@@ -136,15 +143,8 @@ function render(): void {
   }
   app.innerHTML = html;
   if (onBoard) lastHandIds = new Set(handIds);
+  // PET-206: focus the username on the auth screen (the invite code is prefilled by renderSignIn).
   document.querySelector<HTMLInputElement>("#name-input")?.focus();
-  // PET-201: admin invite links are https://co-latro.pdlab.dev/?invite=<code> — prefill the
-  // invite field from the URL so an invited player only types their callsign. Only on the
-  // sign-in screen (where #invite-input exists) and only if the field is empty.
-  const inviteField = document.querySelector<HTMLInputElement>("#invite-input");
-  if (inviteField && !inviteField.value) {
-    const fromUrl = new URLSearchParams(location.search).get("invite");
-    if (fromUrl) inviteField.value = fromUrl;
-  }
 }
 
 function setRun(run: RunStateDTO): void {
@@ -178,22 +178,53 @@ async function boot(): Promise<void> {
 
 // ---- auth ----
 
+/** Apply a successful auth response: store the token + user, load any active run, go to the menu. */
+async function onAuthed(token: string, user: User): Promise<void> {
+  state.token = token;
+  state.user = user;
+  localStorage.setItem(TOKEN_KEY, token);
+  state.run = (await api.activeRun(token)).run;
+  state.menuView = "menu";
+  render();
+}
+
+// PET-206: returning user — username + password.
 async function signIn(): Promise<void> {
-  const name = document.querySelector<HTMLInputElement>("#name-input")?.value.trim();
-  if (!name) return;
-  // PET-59: only send the invite code when the field is filled (existing users sign in without).
-  const inviteCode = document.querySelector<HTMLInputElement>("#invite-input")?.value.trim() || undefined;
+  const username = document.querySelector<HTMLInputElement>("#name-input")?.value.trim();
+  const password = document.querySelector<HTMLInputElement>("#password-input")?.value ?? "";
+  if (!username || !password) {
+    showToast("Enter your username and password", "error");
+    return;
+  }
   try {
-    const { token, user } = await api.login(name, inviteCode);
-    state.token = token;
-    state.user = user;
-    localStorage.setItem(TOKEN_KEY, token);
-    state.run = (await api.activeRun(token)).run;
-    state.menuView = "menu";
-    render();
+    const { token, user } = await api.login(username, password);
+    await onAuthed(token, user);
   } catch (err) {
     showToast((err as Error).message, "error");
   }
+}
+
+// PET-206: new account — username + password + an admin-issued invite code (from the link).
+async function signUp(): Promise<void> {
+  const username = document.querySelector<HTMLInputElement>("#name-input")?.value.trim();
+  const password = document.querySelector<HTMLInputElement>("#password-input")?.value ?? "";
+  const inviteCode = document.querySelector<HTMLInputElement>("#invite-input")?.value.trim() ?? "";
+  if (!username || !password) {
+    showToast("Choose a username and password", "error");
+    return;
+  }
+  try {
+    const { token, user } = await api.signup(username, password, inviteCode);
+    await onAuthed(token, user);
+  } catch (err) {
+    showToast((err as Error).message, "error");
+  }
+}
+
+/** Toggle between the login and signup forms. */
+function setAuthMode(mode: "login" | "signup"): void {
+  state.authMode = mode;
+  render();
 }
 
 /** Clear all client-side auth/run state and return to sign-in. Pure local reset — used both by
@@ -654,6 +685,7 @@ function closeDetail(): void {
  *  and shows a spinner while the promise is in flight. Idempotent: if already loading, ignored. */
 const ASYNC_ACTIONS = new Set([
   "signin",
+  "signup",
   "start-run",
   "confirm-new-run",
   "start-blind",
@@ -702,6 +734,9 @@ app.addEventListener("click", (event) => {
     : (fn: () => Promise<void> | void) => void fn();
   switch (action) {
     case "signin": guard(signIn); break;
+    case "signup": guard(signUp); break;
+    case "show-signin": setAuthMode("login"); break;
+    case "show-signup": setAuthMode("signup"); break;
     case "signout": userSignOut(); break;
     case "goto-play": void gotoPlay(); break;
     case "goto-settings": goMenu("settings"); break;
@@ -745,7 +780,10 @@ app.addEventListener("click", (event) => {
 app.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     const id = (event.target as HTMLElement).id;
-    if (id === "name-input" || id === "invite-input") void signIn();
+    // PET-206: Enter on any auth field submits the active form (login or signup).
+    if (id === "name-input" || id === "password-input" || id === "invite-input") {
+      void (state.authMode === "signup" ? signUp() : signIn());
+    }
   }
 });
 
