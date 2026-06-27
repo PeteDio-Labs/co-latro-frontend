@@ -82,6 +82,10 @@ describe("renderSignIn", () => {
   test("contains the callsign input field", () => {
     expect(renderSignIn()).toContain('id="name-input"');
   });
+
+  test("contains the invite-code input field (PET-59)", () => {
+    expect(renderSignIn()).toContain('id="invite-input"');
+  });
 });
 
 describe("renderMainMenu", () => {
