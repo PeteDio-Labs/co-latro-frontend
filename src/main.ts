@@ -137,6 +137,14 @@ function render(): void {
   app.innerHTML = html;
   if (onBoard) lastHandIds = new Set(handIds);
   document.querySelector<HTMLInputElement>("#name-input")?.focus();
+  // PET-201: admin invite links are https://co-latro.pdlab.dev/?invite=<code> — prefill the
+  // invite field from the URL so an invited player only types their callsign. Only on the
+  // sign-in screen (where #invite-input exists) and only if the field is empty.
+  const inviteField = document.querySelector<HTMLInputElement>("#invite-input");
+  if (inviteField && !inviteField.value) {
+    const fromUrl = new URLSearchParams(location.search).get("invite");
+    if (fromUrl) inviteField.value = fromUrl;
+  }
 }
 
 function setRun(run: RunStateDTO): void {
