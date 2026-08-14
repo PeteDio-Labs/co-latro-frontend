@@ -6,7 +6,7 @@ import { signIn, startNewRun, getRun } from "./helpers";
 test("deck carousel cycles through the catalog", async ({ page }) => {
   await signIn(page);
   await page.click('button[data-action="goto-play"]');
-  await expect(page.locator('button[data-action="start-run"]')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('button[data-action="start-run"]')).toBeVisible();
 
   const screen = page.locator(".cy-screen");
   await expect(screen).toContainText("Standard Deck"); // first deck shown
@@ -21,7 +21,7 @@ test("difficulty is selectable and carried into the run", async ({ page }) => {
   await page.click('button[data-action="goto-play"]');
   await page.click('button[data-action="set-difficulty"][data-difficulty="hard"]');
   await page.click('button[data-action="start-run"]');
-  await expect(page.locator('button[data-action="start-blind"]')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('button[data-action="start-blind"]')).toBeVisible();
 
   const run = await getRun(page);
   expect(run.difficulty).toBe("hard");

@@ -12,14 +12,12 @@ test("sign-in → new run → win the blind → shop", { timeout: 90_000 }, asyn
 
   // blind-select → play the small blind
   await page.click('button[data-action="start-blind"]');
-  await expect(page.locator('button[data-action="toggle-card"]').first()).toBeVisible({
-    timeout: 10000,
-  });
+  await expect(page.locator('button[data-action="toggle-card"]').first()).toBeVisible();
 
   // greedily clear the blind (Easy target is low + 5 hands / 4 discards)
   const run = await driveToShop(page);
   expect(run?.status).toBe("shop");
 
   // shop UI is up: the cash-out Continue button is the stable shop selector
-  await expect(page.locator('button[data-action="continue"]')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('button[data-action="continue"]')).toBeVisible();
 });

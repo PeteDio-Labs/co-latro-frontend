@@ -158,6 +158,21 @@ jobs:
         if: failure()
         run: $COMPOSE logs --no-color
 
+      # playwright.config.ts sets `trace: retain-on-failure`, so a failed test already writes a
+      # full trace (+ error-context.md) into test-results/ — but nothing kept it, and `Stack
+      # down` + the next run's checkout wipe the workspace. A red e2e was therefore only ever
+      # debuggable from the log tail, which is how a runner-speed flake went unexplained through
+      # a whole investigation. Keep the traces: `npx playwright show-trace <zip>` replays the run.
+      # MUST run after the ownership reclaim above — these files are written as root.
+      - name: Upload Playwright traces (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-traces-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
       # Always tear the stack down (and its volumes) so the runner is left clean.
       - name: Stack down
         if: always()

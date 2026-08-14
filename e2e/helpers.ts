@@ -9,6 +9,12 @@ interface Card {
   suit: string;
 }
 
+// A raw wait, so playwright.config.ts's `expect.timeout` does NOT govern it — it needs its own
+// CI allowance for the same reason everything else there is doubled (one shared homelab runner
+// that can be ~2x slower under load). Best-effort (the caller swallows the rejection), so an
+// over-generous ceiling costs nothing when the animation settles early.
+const SCORING_SETTLE_MS = process.env.CI ? 20_000 : 8_000;
+
 export async function authToken(page: Page): Promise<string> {
   return (await page.evaluate(() => localStorage.getItem("poker.token"))) ?? "";
 }
@@ -31,7 +37,7 @@ export async function signIn(page: Page): Promise<string> {
   await page.fill('input[id="name-input"]', username);
   await page.fill('input[id="password-input"]', "e2e-password-123");
   await page.click('button[data-action="signup"]');
-  await expect(page.locator('button[data-action="goto-play"]')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('button[data-action="goto-play"]')).toBeVisible();
   return username;
 }
 
@@ -43,11 +49,11 @@ export async function startNewRun(
 ): Promise<void> {
   const { difficulty = "easy", deckNext = 0 } = opts;
   await page.click('button[data-action="goto-play"]');
-  await expect(page.locator('button[data-action="start-run"]')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('button[data-action="start-run"]')).toBeVisible();
   for (let i = 0; i < deckNext; i++) await page.click('button[data-action="deck-next"]');
   await page.click(`button[data-action="set-difficulty"][data-difficulty="${difficulty}"]`);
   await page.click('button[data-action="start-run"]');
-  await expect(page.locator('button[data-action="start-blind"]')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('button[data-action="start-blind"]')).toBeVisible();
 }
 
 function groupBy<T>(arr: T[], key: (t: T) => string | number): T[][] {
@@ -87,7 +93,9 @@ export async function driveToShop(page: Page, maxMoves = 14): Promise<any> {
     // carries `.cy-card--scoring` and never reaches Playwright's "stable" gate, which flaked the
     // toggle-card click on slower CI runners. Poll until no card is animating (best-effort).
     await page
-      .waitForFunction(() => document.querySelectorAll(".cy-card--scoring").length === 0, { timeout: 8000 })
+      .waitForFunction(() => document.querySelectorAll(".cy-card--scoring").length === 0, {
+        timeout: SCORING_SETTLE_MS,
+      })
       .catch(() => {});
     const run = await getRun(page);
     if (!run || run.status !== "playing") return run;
