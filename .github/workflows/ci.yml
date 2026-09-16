@@ -1,13 +1,23 @@
-# Co-latro frontend — Workflow A (App CI/CD), publish-on-merge.
-#   PR            → typecheck + build (dist/)
-#   push to main  → build + upload dist/ to the MinIO bucket `co-latro-frontend`
+# Co-latro frontend — Workflow A (App CI/CD), publish-on-merge, split by trust.
+#   PR            → `build` on a GitHub-hosted runner: typecheck + vitest + build (dist/)
+#   push to main  → `build`, then `publish` on the self-hosted homelab runner:
+#                   upload dist/ to the MinIO bucket `co-latro-frontend`
+#   dispatch      → `e2e`, the Playwright smoke against a stood-up stack
+#
+# THE SPLIT IS THE SECURITY BOUNDARY, and it is the one petedio-iac already draws
+# (PET-163, PET-407). This repo is public and the runner sits inside the homelab,
+# so a pull request opened by anyone must not run its own code there, and must not
+# carry a token that mints Vault credentials. `build` runs on ubuntu-latest and
+# gets no id-token; `publish`, which no pull request can start, is the only job
+# that asks for one. A single `permissions:` block at the top of the file handed
+# `id-token: write` to every job, the pull-request ones included (PET-460).
 #
 # The build's API calls are all relative (/api/...); nginx on the poker-api VM serves dist/
 # and reverse-proxies /api to the backend on :3020 (same origin, no CORS). See deploy/nginx.conf.
 #
 # MinIO write creds come from Vault via GitHub OIDC (colatro-ci role → colatro-ci policy,
-# secret kv/services/minio-frontend-ci), NOT repo Actions secrets. Runs on the in-homelab
-# self-hosted runner (VM 232) so it can reach MinIO (.221) + Vault (.223). The on-VM
+# secret kv/services/minio-frontend-ci), NOT repo Actions secrets. `publish` runs on the
+# in-homelab runner (VM 232) so it can reach MinIO (.221) + Vault (.223). The on-VM
 # refresh (pull bucket → web root) is the manual deploy.yml.
 name: ci
 
@@ -15,14 +25,26 @@ on:
   pull_request: {}
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      backend_image:
+        description: >-
+          Backend image the e2e stack runs. Leave blank to take the compose
+          default, which names a registry that no longer answers — see the e2e job.
+        required: false
+        default: ""
 
+# The floor for every job. A job that needs more declares it for itself, so
+# adding a job here cannot silently acquire a credential.
 permissions:
   contents: read
-  id-token: write # mint the GitHub OIDC token vault-action exchanges for a Vault token
 
 jobs:
+  # A pull request starts this job, so it runs on a GitHub-hosted runner with no
+  # LAN route and no id-token. Nothing it does needs either: setup-bun, vitest and
+  # vite build all run on the ubuntu-latest image.
   build:
-    runs-on: [self-hosted, linux, x64, homelab]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
@@ -41,14 +63,34 @@ jobs:
       - name: Build
         run: bun run build
 
+  # Push to main only. That `if` is what lets this job hold id-token: the code it
+  # runs has already been merged, so it is code Pedro reviewed. Keep the condition
+  # and the runner label together — moving either one alone reopens PET-460.
+  publish:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: build
+    runs-on: [self-hosted, linux, x64, homelab]
+    permissions:
+      contents: read
+      id-token: write # mint the GitHub OIDC token vault-action exchanges for a Vault token
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      # dist/ is not carried over from `build` — that job runs on a different
+      # machine and uploads no artifact. Rebuild it here, from the merged tree.
+      - name: Build
+        run: bun run build
+
       # vault-action's caCertificate wants base64 PEM; a `with:` can't read a file.
       - name: Encode Vault CA
-        if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
         id: vault_ca
         run: echo "b64=$(base64 -w0 .github/vault-ca.crt)" >> "$GITHUB_OUTPUT"
 
       - name: Vault — mint MinIO write creds via OIDC
-        if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
         uses: hashicorp/vault-action@v4
         with:
           url: https://192.168.50.223:8200
@@ -63,26 +105,39 @@ jobs:
             kv/data/services/minio-frontend-ci access_key | MINIO_ACCESS_KEY ;
             kv/data/services/minio-frontend-ci secret_key | MINIO_SECRET_KEY
 
-      # main: publish dist/ to MinIO (S3-compatible).
       - name: Upload to MinIO
-        if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
         env:
           MINIO_BUCKET: co-latro-frontend
         run: ./scripts/deploy.sh
 
-  # PET-98 — Playwright E2E smoke gate. Stands the backend + nginx stack up in-job (docker
-  # compose: ephemeral Postgres + the Nexus-published backend image + nginx serving a fresh
-  # dist/) at http://localhost:8080, then runs the smoke against it. Gates PRs like vitest:
-  # a separate job, so it shows as its own required check and a flaky e2e can't be confused
-  # with a typecheck/unit failure. Runs on the in-homelab runner so it can pull from Nexus.
+  # PET-98 — Playwright E2E smoke. Stands the backend + nginx stack up in-job (docker
+  # compose: ephemeral Postgres + the published backend image + nginx serving a fresh
+  # dist/) at http://localhost:8080, then runs the smoke against it.
+  #
+  # DISPATCH ONLY, and it cannot be otherwise while Co-latro is paused (PET-460):
+  #
+  #   * A pull request must not start it. It runs the PR's own compose file and
+  #     scripts on the homelab runner, which is the whole of PET-460.
+  #   * ubuntu-latest cannot host it either. The stack pulls the backend image from
+  #     docker.pdlab.dev, a LAN name a GitHub-hosted runner cannot resolve — and one
+  #     that stopped answering on the homelab runner too when the registry on 106
+  #     went (PET-389). The last six PR runs died at `compose pull` with
+  #     "dial tcp 192.168.50.111:443: connect: no route to host".
+  #
+  # To run the smoke, dispatch this workflow and pass `backend_image` — a tag a
+  # runner can actually pull, such as one built from the backend repo. Left blank,
+  # the compose default still names the dead registry and the pull still fails.
+  # PET-388 decides what replaces that registry.
   e2e:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: [self-hosted, linux, x64, homelab]
     env:
       COMPOSE: docker compose -f e2e/stack/docker-compose.yml
       E2E_BASE_URL: http://localhost:8080
-      # Run Playwright inside its official image (browsers + system deps preinstalled) so we
-      # never shell out to `playwright install --with-deps` (that runs `sudo apt-get`, and the
-      # homelab runner has no passwordless sudo). MUST match the installed @playwright/test
+      BACKEND_IMAGE: ${{ inputs.backend_image }}
+      # Run Playwright inside its official image (browsers + system deps preinstalled) so the
+      # job never shells out to `playwright install --with-deps` (that runs `sudo apt-get`, and
+      # the homelab runner has no passwordless sudo). MUST match the installed @playwright/test
       # version (package.json) — bump both together.
       PW_IMAGE: mcr.microsoft.com/playwright:v1.60.0-jammy
     steps:
@@ -97,9 +152,6 @@ jobs:
       - name: Build (dist/ for nginx)
         run: bun run build
 
-      # Pull the latest published backend image, then bring the stack up. The compose file
-      # defaults backend to docker.pdlab.dev/co-latro-backend:latest (what the backend repo's
-      # ci.yml pushes on merge); the homelab runner can reach Nexus.
       - name: Stack up (postgres + backend + nginx)
         run: |
           $COMPOSE pull --quiet

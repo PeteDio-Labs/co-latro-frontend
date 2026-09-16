@@ -59,7 +59,10 @@ Two layers (PET-66):
   The backend image defaults to the Nexus-published `:latest`; set `BACKEND_IMAGE` to a
   locally-built tag to run off the network.
   CI gate (PET-98): the `e2e` job in `.github/workflows/ci.yml` stands this stack up on the
-  homelab runner and runs the smoke (in the Playwright container) on every PR.
+  homelab runner and runs the smoke in the Playwright container. It runs on `workflow_dispatch`
+  only — a pull request must not run its own compose file on the homelab runner (PET-460), and
+  the stack's default backend image comes from a registry that stopped answering (PET-389).
+  To run the smoke, dispatch the workflow and pass `backend_image`.
 
 ## What's here
 
@@ -96,6 +99,8 @@ A static build (`bun run build` → `dist/`). Every API call is **relative** (`/
 served **same-origin** with the backend — `deploy/nginx.conf` (for the poker-api VM) serves `dist/` and
 reverse-proxies `/api` → `http://127.0.0.1:3020`.
 
-CI (`.github/workflows/ci.yml`, Workflow A on the self-hosted homelab runner): **PR** → typecheck + build;
-**merge to `main`** → build + upload `dist/` to the MinIO bucket `co-latro-frontend` via `scripts/deploy.sh`
-(nginx serves the bucket contents on the VM).
+CI (`.github/workflows/ci.yml`, Workflow A, split by trust): **PR** → the `build` job on `ubuntu-latest`
+— typecheck + vitest + build; **merge to `main`** → `build`, then the `publish` job on the self-hosted
+homelab runner — upload `dist/` to the MinIO bucket `co-latro-frontend` via `scripts/deploy.sh`
+(nginx serves the bucket contents on the VM). This repo is public, so no job a pull request can start
+runs on the homelab runner or holds `id-token: write` (PET-460).
